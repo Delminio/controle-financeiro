@@ -4,9 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Organize Financeiro</title>
-    <meta name="theme-color" content="#10b981" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#059669" />
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -44,12 +42,28 @@
 
       function Dashboard() {
         const [data, setData] = useState({ summary: { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 }, transactions: [] });
+        const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'transactions', 'reports', 'accounts'
+        const [people, setPeople] = useState(['Bernadete (Mãe)', 'Filho', 'Família']);
+        const [selectedPersonFilter, setSelectedPersonFilter] = useState('Todas');
+        
+        // Form States
         const [description, setDescription] = useState('');
         const [amount, setAmount] = useState('');
         const [type, setType] = useState('expense');
-        const [account, setAccount] = useState('Carteira');
-        const [loading, setLoading] = useState(false);
+        const [account, setAccount] = useState('Nubank');
+        const [person, setPerson] = useState('Bernadete (Mãe)');
+        
+        // Modals & New Entries
         const [showModal, setShowModal] = useState(false);
+        const [showPersonModal, setShowPersonModal] = useState(false);
+        const [newPersonName, setNewPersonName] = useState('');
+        const [accountsList, setAccountsList] = useState([
+          { name: 'Nubank', color: 'bg-purple-600', initial: 'Nu' },
+          { name: 'Banco Inter', color: 'bg-orange-500', initial: 'In' },
+          { name: 'Carteira (Dinheiro)', color: 'bg-emerald-600', initial: 'R$' }
+        ]);
+        const [newAccountName, setNewAccountName] = useState('');
+        const [loading, setLoading] = useState(false);
 
         const API_URL = 'https://controle-financeiro-x8ah.onrender.com/api/transactions';
 
@@ -77,9 +91,11 @@
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
-                description: account ? `[${account}] ${description}` : description, 
+                description, 
                 amount: parseFloat(amount), 
-                type 
+                type,
+                account,
+                person
               })
             });
 
@@ -94,12 +110,56 @@
           }
         };
 
+        const handleDelete = async (id) => {
+          if (!confirm('Deseja apagar este lançamento?')) return;
+          try {
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            fetchData();
+          } catch (err) {
+            console.error(err);
+          }
+        };
+
+        const handleAddPerson = (e) => {
+          e.preventDefault();
+          if (!newPersonName.trim()) return;
+          if (!people.includes(newPersonName)) {
+            setPeople([...people, newPersonName]);
+            setPerson(newPersonName);
+          }
+          setNewPersonName('');
+          setShowPersonModal(false);
+        };
+
+        const handleAddAccount = (e) => {
+          e.preventDefault();
+          if (!newAccountName.trim()) return;
+          const initial = newAccountName.substring(0, 2).toUpperCase();
+          setAccountsList([...accountsList, { name: newAccountName, color: 'bg-blue-600', initial }]);
+          setNewAccountName('');
+        };
+
+        const filteredTransactions = selectedPersonFilter === 'Todas'
+          ? data.transactions
+          : data.transactions.filter(t => (t.person || 'Bernadete (Mãe)') === selectedPersonFilter);
+
+        const totalReceitas = filteredTransactions
+          .filter(t => t.type === 'income')
+          .reduce((acc, t) => acc + Number(t.amount), 0);
+
+        const totalDespesas = filteredTransactions
+          .filter(t => t.type === 'expense')
+          .reduce((acc, t) => acc + Number(t.amount), 0);
+
+        const saldoFinal = totalReceitas - totalDespesas;
+
         const formatMoney = (val) => {
           return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
         };
 
         return (
           <div className="min-h-screen">
+            <!-- Header Verde -->
             <header className="bg-brand-600 text-white shadow-md">
               <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -108,13 +168,36 @@
                   </div>
                   <span className="font-bold text-xl tracking-tight">organize</span>
                 </div>
+
+                <!-- Abas Desktop -->
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-emerald-100">
-                  <a href="#" className="text-white border-b-2 border-white pb-1">visão geral</a>
-                  <a href="#" className="hover:text-white transition">lançamentos</a>
-                  <a href="#" className="hover:text-white transition">relatórios</a>
-                  <a href="#" className="hover:text-white transition">contas manuais</a>
+                  <button 
+                    onClick={() => setActiveTab('overview')} 
+                    className={`pb-1 transition ${activeTab === 'overview' ? 'text-white border-b-2 border-white font-bold' : 'hover:text-white'}`}
+                  >
+                    visão geral
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('transactions')} 
+                    className={`pb-1 transition ${activeTab === 'transactions' ? 'text-white border-b-2 border-white font-bold' : 'hover:text-white'}`}
+                  >
+                    lançamentos
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('reports')} 
+                    className={`pb-1 transition ${activeTab === 'reports' ? 'text-white border-b-2 border-white font-bold' : 'hover:text-white'}`}
+                  >
+                    relatórios
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('accounts')} 
+                    className={`pb-1 transition ${activeTab === 'accounts' ? 'text-white border-b-2 border-white font-bold' : 'hover:text-white'}`}
+                  >
+                    contas manuais
+                  </button>
                 </nav>
-                <div className="flex items-center gap-3">
+
+                <div className="flex items-center gap-2">
                   <button 
                     onClick={() => setShowModal(true)}
                     className="bg-white text-brand-700 hover:bg-emerald-50 px-3.5 py-1.5 rounded-xl font-bold text-sm shadow-sm transition flex items-center gap-1.5"
@@ -125,123 +208,254 @@
               </div>
             </header>
 
+            <!-- Subheader: Filtro de Pessoa & Resumo -->
             <div className="bg-white border-b border-slate-200">
-              <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-lg font-bold text-slate-800">Olá, Mãe! 👋</h1>
-                  <p className="text-xs text-slate-500">Resumo de movimentações do mês</p>
+              <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <h1 className="text-lg font-bold text-slate-800">Olá, Bernadete! 👋</h1>
+                    <p className="text-xs text-slate-500">Controle de receitas e despesas</p>
+                  </div>
+                  
+                  <!-- Seletor de Pessoa -->
+                  <div className="ml-2 flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-500 pl-2">Pessoa:</span>
+                    <select 
+                      value={selectedPersonFilter} 
+                      onChange={(e) => setSelectedPersonFilter(e.target.value)}
+                      className="bg-transparent text-xs font-bold text-brand-700 p-1 focus:outline-none cursor-pointer"
+                    >
+                      <option value="Todas">Todas</option>
+                      {people.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                    <button 
+                      onClick={() => setShowPersonModal(true)}
+                      className="bg-brand-600 text-white w-5 h-5 rounded-lg flex items-center justify-center font-bold text-xs"
+                      title="Adicionar Pessoa"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-100">
                   <div>
                     <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Receita Mensal</span>
-                    <span className="text-sm font-bold text-emerald-600">{formatMoney(data.summary.totalReceitas)}</span>
+                    <span className="text-sm font-bold text-emerald-600">{formatMoney(totalReceitas)}</span>
                   </div>
                   <div className="h-8 w-px bg-slate-200"></div>
                   <div>
                     <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Despesa Mensal</span>
-                    <span className="text-sm font-bold text-rose-600">{formatMoney(data.summary.totalDespesas)}</span>
+                    <span className="text-sm font-bold text-rose-600">{formatMoney(totalDespesas)}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <main className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-12 gap-6">
-              <div className="md:col-span-7 flex flex-col gap-6">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md uppercase tracking-wider">
-                      Saldo Geral
-                    </span>
+            <!-- Conteúdo Dinâmico por Aba -->
+            <main className="max-w-6xl mx-auto px-4 py-6">
+
+              <!-- ABA 1: VISÃO GERAL -->
+              {activeTab === 'overview' && (
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                  <div className="md:col-span-7 flex flex-col gap-6">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md uppercase tracking-wider inline-block mb-2">
+                        Saldo Geral ({selectedPersonFilter})
+                      </span>
+                      <div className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                        {formatMoney(saldoFinal)}
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="font-bold text-slate-800 text-sm">Minhas Contas (Manuais)</h2>
+                        <button onClick={() => setActiveTab('accounts')} className="text-xs text-emerald-600 font-semibold cursor-pointer">+ Gerenciar</button>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        {accountsList.map(acc => {
+                          const accBalance = filteredTransactions
+                            .filter(t => (t.account || 'Nubank') === acc.name)
+                            .reduce((accVal, t) => t.type === 'income' ? accVal + Number(t.amount) : accVal - Number(t.amount), 0);
+
+                          return (
+                            <div key={acc.name} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full ${acc.color} text-white flex items-center justify-center font-bold text-xs`}>
+                                  {acc.initial}
+                                </div>
+                                <div>
+                                  <p className="text-xs font-bold text-slate-800">{acc.name}</p>
+                                  <p className="text-[10px] text-slate-400">Conta Manual</p>
+                                </div>
+                              </div>
+                              <span className="text-xs font-bold text-slate-700">{formatMoney(accBalance)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    {formatMoney(data.summary.saldoFinal)}
+
+                  <div className="md:col-span-5 flex flex-col gap-6">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                      <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                        <h2 className="font-bold text-slate-800 text-sm">Últimos Lançamentos</h2>
+                        <button onClick={() => setActiveTab('transactions')} className="text-xs text-brand-600 font-bold">Ver todos</button>
+                      </div>
+
+                      {filteredTransactions.length === 0 ? (
+                        <div className="py-8 text-center text-slate-400 text-xs">Nenhum lançamento.</div>
+                      ) : (
+                        <div className="divide-y divide-slate-100 max-h-[350px] overflow-y-auto hide-scrollbar">
+                          {filteredTransactions.slice(0, 5).map((t) => (
+                            <div key={t.id} className="py-3 flex items-center justify-between">
+                              <div className="flex items-center gap-2.5">
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                                  t.type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                                }`}>
+                                  {t.type === 'income' ? '↓' : '↑'}
+                                </div>
+                                <div>
+                                  <p className="text-xs font-bold text-slate-800">{t.description}</p>
+                                  <p className="text-[10px] text-slate-400">
+                                    {t.person || 'Bernadete'} • {t.account || 'Nubank'}
+                                  </p>
+                                </div>
+                              </div>
+                              <span className={`text-xs font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-700'}`}>
+                                {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
+              )}
 
+              <!-- ABA 2: LANÇAMENTOS (LISTA COMPLETA & EXCLUSÃO) -->
+              {activeTab === 'transactions' && (
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-bold text-slate-800 text-sm">Minhas Contas (Manuais)</h2>
-                    <span className="text-xs text-emerald-600 font-semibold cursor-pointer">+ Adicionar</span>
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <h2 className="font-bold text-slate-800 text-base">Todos os Lançamentos ({filteredTransactions.length})</h2>
+                    <button onClick={() => setShowModal(true)} className="bg-brand-600 text-white text-xs px-3 py-1.5 rounded-xl font-bold">+ Novo Lançamento</button>
                   </div>
 
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-xs">
-                          Nu
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-800">Nubank</p>
-                          <p className="text-[10px] text-slate-400">Conta Manual</p>
-                        </div>
-                      </div>
-                      <span className="text-xs font-bold text-slate-700">{formatMoney(data.summary.saldoFinal)}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 opacity-60">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-xs">
-                          In
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-800">Banco Inter</p>
-                          <p className="text-[10px] text-slate-400">Conta Manual</p>
-                        </div>
-                      </div>
-                      <span className="text-xs font-bold text-slate-700">R$ 0,00</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="md:col-span-5 flex flex-col gap-6">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                    <h2 className="font-bold text-slate-800 text-sm">Últimos Lançamentos</h2>
-                    <span className="text-xs text-slate-400">{data.transactions.length} itens</span>
-                  </div>
-
-                  {data.transactions.length === 0 ? (
-                    <div className="py-8 text-center text-slate-400 text-xs">
-                      Nenhuma movimentação registrada.
-                    </div>
+                  {filteredTransactions.length === 0 ? (
+                    <div className="py-12 text-center text-slate-400 text-sm">Sem movimentações para exibir.</div>
                   ) : (
-                    <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto hide-scrollbar">
-                      {data.transactions.map((t) => (
-                        <div key={t.id} className="py-3 flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                    <div className="divide-y divide-slate-100">
+                      {filteredTransactions.map((t) => (
+                        <div key={t.id} className="py-3 flex items-center justify-between hover:bg-slate-50 px-2 rounded-xl">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
                               t.type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                             }`}>
-                              {t.type === 'income' ? '↓' : '↑'}
+                              {t.type === 'income' ? '+' : '-'}
                             </div>
                             <div>
-                              <p className="text-xs font-bold text-slate-800">{t.description}</p>
-                              <p className="text-[10px] text-slate-400">
-                                {new Date(t.date || t.id).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                              <p className="text-sm font-bold text-slate-800">{t.description}</p>
+                              <p className="text-xs text-slate-400">
+                                Pessoa: <strong className="text-slate-600">{t.person || 'Bernadete'}</strong> | Conta: <strong className="text-slate-600">{t.account || 'Nubank'}</strong> | {new Date(t.date || t.id).toLocaleDateString('pt-BR')}
                               </p>
                             </div>
                           </div>
-                          <span className={`text-xs font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-700'}`}>
-                            {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
-                          </span>
+                          <div className="flex items-center gap-4">
+                            <span className={`text-sm font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-700'}`}>
+                              {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                            </span>
+                            <button onClick={() => handleDelete(t.id)} className="text-xs text-rose-500 hover:text-rose-700 font-bold">Apagar</button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-              </div>
+              )}
+
+              <!-- ABA 3: RELATÓRIOS & RESUMO -->
+              {activeTab === 'reports' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 className="font-bold text-slate-800 text-sm mb-4">Resumo por Pessoa</h2>
+                    <div className="flex flex-col gap-3">
+                      {people.map(p => {
+                        const pTotal = data.transactions
+                          .filter(t => (t.person || 'Bernadete (Mãe)') === p)
+                          .reduce((acc, t) => t.type === 'income' ? acc + Number(t.amount) : acc - Number(t.amount), 0);
+                        return (
+                          <div key={p} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                            <span className="text-xs font-bold text-slate-700">{p}</span>
+                            <span className={`text-xs font-bold ${pTotal >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {formatMoney(pTotal)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 className="font-bold text-slate-800 text-sm mb-4">Balanço Geral da Família</h2>
+                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl mb-3">
+                      <p className="text-xs font-bold text-emerald-800">Total Entradas</p>
+                      <p className="text-xl font-extrabold text-emerald-600">{formatMoney(data.summary.totalReceitas)}</p>
+                    </div>
+                    <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl">
+                      <p className="text-xs font-bold text-rose-800">Total Saídas</p>
+                      <p className="text-xl font-extrabold text-rose-600">{formatMoney(data.summary.totalDespesas)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <!-- ABA 4: CONTAS MANUAIS -->
+              {activeTab === 'accounts' && (
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                  <h2 className="font-bold text-slate-800 text-base mb-4">Gerenciar Contas Manuais</h2>
+                  
+                  <form onSubmit={handleAddAccount} className="flex gap-2 mb-6 max-w-md">
+                    <input 
+                      type="text" 
+                      placeholder="Nome da Conta (ex: Itaú, Caixa)"
+                      value={newAccountName}
+                      onChange={(e) => setNewAccountName(e.target.value)}
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                    />
+                    <button type="submit" className="bg-brand-600 text-white text-xs px-4 py-2 rounded-xl font-bold">+ Criar Conta</button>
+                  </form>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {accountsList.map(acc => (
+                      <div key={acc.name} className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full ${acc.color} text-white flex items-center justify-center font-bold text-sm`}>
+                          {acc.initial}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">{acc.name}</p>
+                          <p className="text-[10px] text-slate-400">Conta Manual Ativa</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </main>
 
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2 flex justify-between items-center z-40">
-              <button className="flex flex-col items-center gap-0.5 text-brand-600">
+            <!-- Bottom Navigation Bar (Mobile) -->
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-2 flex justify-between items-center z-40">
+              <button onClick={() => setActiveTab('overview')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'overview' ? 'text-brand-600 font-bold' : 'text-slate-400'}`}>
                 <span className="text-lg">🏠</span>
-                <span className="text-[10px] font-bold">Início</span>
+                <span className="text-[10px]">Início</span>
               </button>
-              <button className="flex flex-col items-center gap-0.5 text-slate-400">
-                <span className="text-lg">📊</span>
-                <span className="text-[10px] font-medium">Relatórios</span>
+              <button onClick={() => setActiveTab('transactions')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'transactions' ? 'text-brand-600 font-bold' : 'text-slate-400'}`}>
+                <span className="text-lg">📋</span>
+                <span className="text-[10px]">Lançamentos</span>
               </button>
               <button 
                 onClick={() => setShowModal(true)}
@@ -249,16 +463,17 @@
               >
                 +
               </button>
-              <button className="flex flex-col items-center gap-0.5 text-slate-400">
-                <span className="text-lg">💳</span>
-                <span className="text-[10px] font-medium">Contas</span>
+              <button onClick={() => setActiveTab('reports')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'reports' ? 'text-brand-600 font-bold' : 'text-slate-400'}`}>
+                <span className="text-lg">📊</span>
+                <span className="text-[10px]">Relatórios</span>
               </button>
-              <button className="flex flex-col items-center gap-0.5 text-slate-400">
-                <span className="text-lg">⚙️</span>
-                <span className="text-[10px] font-medium">Ajustes</span>
+              <button onClick={() => setActiveTab('accounts')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'accounts' ? 'text-brand-600 font-bold' : 'text-slate-400'}`}>
+                <span className="text-lg">💳</span>
+                <span className="text-[10px]">Contas</span>
               </button>
             </div>
 
+            <!-- MODAL: NOVO LANÇAMENTO -->
             {showModal && (
               <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                 <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-xl border border-slate-100">
@@ -275,7 +490,7 @@
                         placeholder="Ex: Mercado, Luz, Salário"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-brand-500"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
                         required
                       />
                     </div>
@@ -289,22 +504,31 @@
                           placeholder="0,00"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-brand-500"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1">Conta / Carteira</label>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1">Pessoa Responsável</label>
                         <select 
-                          value={account} 
-                          onChange={(e) => setAccount(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-brand-500"
+                          value={person} 
+                          onChange={(e) => setPerson(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
                         >
-                          <option value="Nubank">Nubank</option>
-                          <option value="Inter">Inter</option>
-                          <option value="Carteira">Carteira (Dinheiro)</option>
+                          {people.map(p => <option key={p} value={p}>{p}</option>)}
                         </select>
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Conta / Carteira</label>
+                      <select 
+                        value={account} 
+                        onChange={(e) => setAccount(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                      >
+                        {accountsList.map(a => <option key={a.name} value={a.name}>{a.name}</option>)}
+                      </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 my-1">
@@ -339,6 +563,36 @@
                 </div>
               </div>
             )}
+
+            <!-- MODAL: NOVA PESSOA -->
+            {showPersonModal && (
+              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="bg-white w-full max-w-sm rounded-2xl p-5 shadow-xl border border-slate-100">
+                  <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+                    <h3 className="font-bold text-slate-800 text-sm">Adicionar Nova Pessoa</h3>
+                    <button onClick={() => setShowPersonModal(false)} className="text-slate-400 text-lg font-bold">✕</button>
+                  </div>
+
+                  <form onSubmit={handleAddPerson} className="flex flex-col gap-3">
+                    <input
+                      type="text"
+                      placeholder="Nome da Pessoa (ex: Carlos, Joana)"
+                      value={newPersonName}
+                      onChange={(e) => setNewPersonName(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      className="bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-200 transition"
+                    >
+                      Adicionar Pessoa
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
           </div>
         );
       }
