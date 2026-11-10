@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Layout from './components/Layout';
 import Accounts from './pages/Accounts';
 import AIAssistant from './pages/AIAssistant';
 import Budget from './pages/Budget';
@@ -17,7 +18,6 @@ import Investments from './pages/Investments';
 import Profile from './pages/Profile';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
-import Sidebar from './components/Sidebar';
 import { fetchWithAuth } from './services/api';
 
 const EXPENSE_CATEGORIES = [
@@ -60,11 +60,11 @@ export default function App() {
   const [name, setName] = useState('');
   const [authError, setAuthError] = useState('');
 
-  // Modais Separados de Despesa e Receita
+  // Modais de Lançamentos
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
 
-  // Estados do Formulário de Despesa
+  // Formulário Despesa
   const [expenseDesc, setExpenseDesc] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState(EXPENSE_CATEGORIES[0]);
@@ -72,13 +72,13 @@ export default function App() {
   const [expenseCardId, setExpenseCardId] = useState('');
   const [expenseInstallments, setExpenseInstallments] = useState('1');
 
-  // Estados do Formulário de Receita
+  // Formulário Receita
   const [incomeDesc, setIncomeDesc] = useState('');
   const [incomeAmount, setIncomeAmount] = useState('');
   const [incomeCategory, setIncomeCategory] = useState(INCOME_CATEGORIES[0]);
   const [incomePaymentMethod, setIncomePaymentMethod] = useState('PIX');
 
-  // Dados do Servidor
+  // Dados remotos
   const [cardsList, setCardsList] = useState([]);
   const [accountsList, setAccountsList] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -153,7 +153,6 @@ export default function App() {
     setUser({});
   };
 
-  // LANÇAR DESPESA (-)
   const handleCreateExpense = async (e) => {
     e.preventDefault();
     if (!expenseDesc || !expenseAmount) return;
@@ -188,7 +187,6 @@ export default function App() {
         setExpenseAmount('');
         setShowExpenseModal(false);
         loadAppData();
-        alert('Despesa lançada com sucesso!');
       } else {
         const errJson = await res.json();
         alert(errJson.error || 'Erro ao salvar despesa na base de dados.');
@@ -199,7 +197,6 @@ export default function App() {
     }
   };
 
-  // LANÇAR RECEITA (+)
   const handleCreateIncome = async (e) => {
     e.preventDefault();
     if (!incomeDesc || !incomeAmount) return;
@@ -226,7 +223,6 @@ export default function App() {
         setIncomeAmount('');
         setShowIncomeModal(false);
         loadAppData();
-        alert('Receita lançada com sucesso!');
       } else {
         const errJson = await res.json();
         alert(errJson.error || 'Erro ao salvar receita na base de dados.');
@@ -237,7 +233,6 @@ export default function App() {
     }
   };
 
-  // EXCLUIR LANÇAMENTO
   const handleDeleteTransaction = async (id) => {
     if (!window.confirm('Tem certeza de que deseja apagar este lançamento?')) return;
 
@@ -265,10 +260,13 @@ export default function App() {
   if (!token) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl border border-slate-100">
+        <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl border border-slate-800">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-black text-slate-900">Organize Financeiro</h1>
-            <p className="text-xs text-slate-500 mt-1">Gestão SaaS Comercial e Pessoal</p>
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white text-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-indigo-500/30">
+              💎
+            </div>
+            <h1 className="text-2xl font-black text-slate-900">Finanças SaaS</h1>
+            <p className="text-xs text-slate-500 mt-1">Gestão Financeira Comercial & Pessoal</p>
           </div>
 
           {authError && (
@@ -285,7 +283,7 @@ export default function App() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
                   required
                 />
               </div>
@@ -296,7 +294,7 @@ export default function App() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
                 required
               />
             </div>
@@ -306,19 +304,19 @@ export default function App() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
                 required
               />
             </div>
 
-            <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-lg shadow-emerald-200 transition cursor-pointer">
-              {isLogin ? 'Entrar na Conta' : 'Criar Conta Gratuita'}
+            <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-lg shadow-indigo-200 transition cursor-pointer">
+              {isLogin ? 'Entrar no Sistema' : 'Criar Conta SaaS'}
             </button>
           </form>
 
           <div className="text-center mt-6">
-            <button onClick={() => setIsLogin(!isLogin)} className="text-xs font-bold text-emerald-600 hover:underline cursor-pointer">
-              {isLogin ? 'Não tem conta? Registe-se aqui' : 'Já tem conta? Faça login'}
+            <button onClick={() => setIsLogin(!isLogin)} className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer">
+              {isLogin ? 'Não tem conta? Registe-se gratuitamente' : 'Já possui conta? Faça login'}
             </button>
           </div>
         </div>
@@ -329,212 +327,175 @@ export default function App() {
   const formatMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      <header className="bg-white border-b border-slate-200/80 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-base shadow-md">
-            💰
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout}>
+      {/* 1. DASHBOARD — VISÃO GERAL */}
+      {activeTab === 'dashboard' && (
+        <div className="flex flex-col gap-6">
+          <div className="bg-white dark:bg-slate-950 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">Visão Geral</h2>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Resumo executivo do fluxo de caixa e faturas</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={handleExportExcel} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs cursor-pointer hover:bg-slate-200 transition">
+                📥 Exportar Excel
+              </button>
+              <button onClick={() => setShowExpenseModal(true)} className="bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer transition">
+                - Lançar Despesa
+              </button>
+              <button onClick={() => setShowIncomeModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer transition">
+                + Lançar Receita
+              </button>
+            </div>
           </div>
-          <div>
-            <h1 className="text-sm font-black text-slate-900 leading-none">Finanças</h1>
-            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Gestão SaaS Premium</span>
+
+          {/* Cards de Destaque Dashboard */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white dark:bg-slate-950 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Receitas do Mês</span>
+                <span className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center text-sm font-black">📈</span>
+              </div>
+              <span className="text-2xl font-black text-emerald-600">{formatMoney(summary.totalReceitas)}</span>
+            </div>
+            
+            <div className="bg-white dark:bg-slate-950 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Despesas (Débito/PIX)</span>
+                <span className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center text-sm font-black">📉</span>
+              </div>
+              <span className="text-2xl font-black text-rose-600">{formatMoney(summary.totalDespesasDebito)}</span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-950 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Saldo em Conta</span>
+                <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center text-sm font-black">🏦</span>
+              </div>
+              <span className={`text-2xl font-black ${summary.saldoFinal >= 0 ? 'text-slate-900 dark:text-white' : 'text-rose-600'}`}>
+                {formatMoney(summary.saldoFinal)}
+              </span>
+            </div>
+
+            <div className="bg-purple-50/70 dark:bg-purple-950/20 p-6 rounded-3xl border border-purple-200/80 dark:border-purple-800 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-purple-700 dark:text-purple-400">Fatura Cartão (Crédito)</span>
+                <span className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900 text-purple-700 flex items-center justify-center text-sm font-black">💳</span>
+              </div>
+              <span className="text-2xl font-black text-purple-700 dark:text-purple-300">{formatMoney(summary.totalDespesasCredito)}</span>
+              <p className="text-[10px] text-purple-500 font-bold mt-1">Não abata do saldo em conta</p>
+            </div>
+          </div>
+
+          {/* Últimas Movimentações */}
+          <div className="bg-white dark:bg-slate-950 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+            <h3 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm mb-4">Últimas Movimentações</h3>
+            {transactions.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-6">Nenhum lançamento registrado.</p>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {transactions.slice(0, 5).map(t => (
+                  <div key={t.id} className="py-3 flex items-center justify-between text-xs">
+                    <div>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">{t.description}</p>
+                      <p className="text-[10px] text-slate-400">{t.category} • {t.payment_method || 'Dinheiro'}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className={`font-black ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
+                        {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteTransaction(t.id)}
+                        className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950 text-rose-500 rounded-lg transition cursor-pointer"
+                        title="Apagar lançamento"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
+      )}
 
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex flex-col text-right">
-            <span className="text-xs font-black text-slate-800">{user.name || 'Utilizador'}</span>
-            <span className="text-[10px] text-slate-400 font-medium">Administrador</span>
+      {/* 2. LANÇAMENTOS */}
+      {activeTab === 'transactions' && (
+        <div className="flex flex-col gap-6">
+          <div className="bg-white dark:bg-slate-950 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">Lançamentos</h2>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Histórico completo de receitas e despesas</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={handleExportExcel} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs cursor-pointer">
+                📥 Exportar Excel
+              </button>
+              <button onClick={() => setShowExpenseModal(true)} className="bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer">
+                - Lançar Despesa
+              </button>
+              <button onClick={() => setShowIncomeModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer">
+                + Lançar Receita
+              </button>
+            </div>
           </div>
-          <button onClick={handleLogout} className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-extrabold text-xs px-4 py-2 rounded-xl transition cursor-pointer">
-            Sair
-          </button>
+
+          <div className="bg-white dark:bg-slate-950 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+            {transactions.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-8">Nenhum lançamento encontrado.</p>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {transactions.map(t => (
+                  <div key={t.id} className="py-4 flex items-center justify-between text-xs">
+                    <div>
+                      <p className="font-black text-slate-800 dark:text-slate-200 text-sm">{t.description}</p>
+                      <p className="text-[11px] text-slate-400">{t.category} • {t.payment_method || 'Dinheiro'} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className={`font-black text-sm ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
+                        {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteTransaction(t.id)}
+                        className="px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1"
+                        title="Apagar lançamento"
+                      >
+                        🗑️ <span className="hidden sm:inline">Excluir</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </header>
+      )}
 
-      {/* Navegação por Abas */}
-      <nav className="bg-white border-b border-slate-200/60 px-6 py-3 flex gap-2 overflow-x-auto hide-scrollbar shadow-xs">
-        {[
-          { id: 'dashboard', label: '📊 Dashboard' },
-          { id: 'transactions', label: '📝 Lançamentos' },
-          { id: 'accounts', label: '🏦 Contas Bancárias' },
-          { id: 'cards', label: '💳 Cartões' },
-          { id: 'categories', label: '🏷️ Categorias' },
-          { id: 'calendar', label: '📅 Calendário' },
-          { id: 'charts', label: '📈 Gráficos' },
-          { id: 'budget', label: '🎯 Orçamento' },
-          { id: 'goals', label: '🏆 Metas' },
-          { id: 'debts', label: '🤝 Empréstimos' },
-          { id: 'investments', label: '📊 Investimentos' },
-          { id: 'emergency', label: '🛡️ Reserva' },
-          { id: 'installments', label: '⏱️ Parcelas' },
-          { id: 'fixed', label: '🔄 Contas Fixas' },
-          { id: 'forecast', label: '🔮 Previsão' },
-          { id: 'ai', label: '🤖 Assistente IA' },
-          { id: 'reports', label: '📑 Relatórios' },
-          { id: 'profile', label: '👤 Perfil' }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition cursor-pointer ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' : 'text-slate-600 hover:bg-slate-100'}`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+      {/* DEMAIS ABAS DO SISTEMA */}
+      {activeTab === 'categories' && <Categories />}
+      {activeTab === 'accounts' && <Accounts />}
+      {activeTab === 'cards' && <CreditCards />}
+      {activeTab === 'calendar' && <CalendarView />}
+      {activeTab === 'charts' && <Charts />}
+      {activeTab === 'budget' && <Budget />}
+      {activeTab === 'goals' && <Goals />}
+      {activeTab === 'debts' && <Debts />}
+      {activeTab === 'investments' && <Investments />}
+      {activeTab === 'emergency' && <Emergency />}
+      {activeTab === 'installments' && <Installments />}
+      {activeTab === 'fixed' && <FixedExpenses />}
+      {activeTab === 'forecast' && <Forecast />}
+      {activeTab === 'ai' && <AIAssistant />}
+      {activeTab === 'reports' && <Reports />}
+      {activeTab === 'profile' && <Profile />}
+      {activeTab === 'settings' && <Settings />}
 
-      {/* Conteúdo da Aplicação */}
-      <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
-        {activeTab === 'dashboard' && (
-          <div className="flex flex-col gap-6">
-            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-black text-slate-900">Visão Geral</h2>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">Resumo financeiro das movimentações</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <button onClick={handleExportExcel} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs cursor-pointer">
-                  📥 Exportar Excel
-                </button>
-                <button onClick={() => setShowExpenseModal(true)} className="bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer transition">
-                  - Lançar Despesa
-                </button>
-                <button onClick={() => setShowIncomeModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer transition">
-                  + Lançar Receita
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Total de Receitas</span>
-                <span className="text-2xl font-black text-emerald-600">{formatMoney(summary.totalReceitas)}</span>
-              </div>
-              
-              <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Despesas à Vista (Débito/PIX)</span>
-                <span className="text-2xl font-black text-rose-600">{formatMoney(summary.totalDespesasDebito)}</span>
-              </div>
-
-              <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Saldo em Conta (Débito)</span>
-                <span className={`text-2xl font-black ${summary.saldoFinal >= 0 ? 'text-slate-900' : 'text-rose-600'}`}>{formatMoney(summary.saldoFinal)}</span>
-              </div>
-
-              <div className="bg-purple-50/70 p-6 rounded-3xl border border-purple-200/80 shadow-sm">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-purple-700 block mb-2">Fatura Cartão (Crédito)</span>
-                <span className="text-2xl font-black text-purple-700">{formatMoney(summary.totalDespesasCredito)}</span>
-                <p className="text-[10px] text-purple-500 font-bold mt-1">NÃO abata do seu saldo em conta</p>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-              <h3 className="font-extrabold text-slate-800 text-sm mb-4">Últimas Movimentações</h3>
-              {transactions.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-6">Nenhum lançamento registrado.</p>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {transactions.slice(0, 5).map(t => (
-                    <div key={t.id} className="py-3 flex items-center justify-between text-xs">
-                      <div>
-                        <p className="font-bold text-slate-800">{t.description}</p>
-                        <p className="text-[10px] text-slate-400">{t.category} • {t.payment_method || 'Dinheiro'}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className={`font-black ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
-                          {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
-                        </span>
-                        <button
-                          onClick={() => handleDeleteTransaction(t.id)}
-                          className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-lg transition cursor-pointer"
-                          title="Apagar lançamento"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'transactions' && (
-          <div className="flex flex-col gap-6">
-            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-black text-slate-900">Lançamentos</h2>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">Histórico completo de receitas e despesas</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <button onClick={handleExportExcel} className="bg-slate-100 text-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs cursor-pointer">
-                  📥 Exportar Excel
-                </button>
-                <button onClick={() => setShowExpenseModal(true)} className="bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer">
-                  - Lançar Despesa
-                </button>
-                <button onClick={() => setShowIncomeModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer">
-                  + Lançar Receita
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-              {transactions.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-8">Nenhum lançamento encontrado.</p>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {transactions.map(t => (
-                    <div key={t.id} className="py-4 flex items-center justify-between text-xs">
-                      <div>
-                        <p className="font-black text-slate-800 text-sm">{t.description}</p>
-                        <p className="text-[11px] text-slate-400">{t.category} • {t.payment_method || 'Dinheiro'} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className={`font-black text-sm ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
-                          {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
-                        </span>
-                        <button
-                          onClick={() => handleDeleteTransaction(t.id)}
-                          className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1"
-                          title="Apagar lançamento"
-                        >
-                          🗑️ <span className="hidden sm:inline">Excluir</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'accounts' && <Accounts />}
-        {activeTab === 'cards' && <CreditCards />}
-        {activeTab === 'categories' && <Categories />}
-        {activeTab === 'calendar' && <CalendarView />}
-        {activeTab === 'charts' && <Charts />}
-        {activeTab === 'budget' && <Budget />}
-        {activeTab === 'goals' && <Goals />}
-        {activeTab === 'debts' && <Debts />}
-        {activeTab === 'investments' && <Investments />}
-        {activeTab === 'emergency' && <Emergency />}
-        {activeTab === 'installments' && <Installments />}
-        {activeTab === 'fixed' && <FixedExpenses />}
-        {activeTab === 'forecast' && <Forecast />}
-        {activeTab === 'ai' && <AIAssistant />}
-        {activeTab === 'reports' && <Reports />}
-        {activeTab === 'profile' && <Profile />}
-      </main>
-
-      {/* JANELA 1: LANÇAR DESPESA (-) */}
+      {/* MODAL LANÇAR DESPESA (-) */}
       {showExpenseModal && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-rose-500"></span>
                 <h3 className="font-extrabold text-rose-600 text-sm">Lançar Nova Despesa (-)</h3>
@@ -544,36 +505,36 @@ export default function App() {
             
             <form onSubmit={handleCreateExpense} className="flex flex-col gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Descrição da Despesa</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Descrição da Despesa</label>
                 <input
                   type="text"
                   placeholder="Ex: Compra Atacadão, Farmácia, Luz"
                   value={expenseDesc}
                   onChange={(e) => setExpenseDesc(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Valor (R$)</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Valor (R$)</label>
                 <input
                   type="number"
                   step="0.01"
                   placeholder="0.00"
                   value={expenseAmount}
                   onChange={(e) => setExpenseAmount(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Categoria da Despesa</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Categoria da Despesa</label>
                 <select
                   value={expenseCategory}
                   onChange={(e) => setExpenseCategory(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                 >
                   {EXPENSE_CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -582,11 +543,11 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Forma de Pagamento</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Forma de Pagamento</label>
                 <select
                   value={expensePaymentMethod}
                   onChange={(e) => setExpensePaymentMethod(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                 >
                   <option value="Dinheiro">Dinheiro</option>
                   <option value="PIX">PIX</option>
@@ -599,11 +560,11 @@ export default function App() {
               {expensePaymentMethod === 'Cartão de Crédito' && (
                 <>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Selecionar Cartão de Crédito</label>
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Selecionar Cartão de Crédito</label>
                     <select
                       value={expenseCardId}
                       onChange={(e) => setExpenseCardId(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                       required
                     >
                       {cardsList.length === 0 ? (
@@ -619,11 +580,11 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Número de Parcelas</label>
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Número de Parcelas</label>
                     <select
                       value={expenseInstallments}
                       onChange={(e) => setExpenseInstallments(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                     >
                       {[1,2,3,4,5,6,7,8,9,10,11,12].map(num => (
                         <option key={num} value={num}>{num}x {num === 1 ? '(À vista)' : 'sem juros'}</option>
@@ -641,11 +602,11 @@ export default function App() {
         </div>
       )}
 
-      {/* JANELA 2: LANÇAR RECEITA (+) */}
+      {/* MODAL LANÇAR RECEITA (+) */}
       {showIncomeModal && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
                 <h3 className="font-extrabold text-emerald-600 text-sm">Lançar Nova Receita (+)</h3>
@@ -655,36 +616,36 @@ export default function App() {
             
             <form onSubmit={handleCreateIncome} className="flex flex-col gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Descrição da Receita</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Descrição da Receita</label>
                 <input
                   type="text"
                   placeholder="Ex: Salário, Freelance, Rendimentos"
                   value={incomeDesc}
                   onChange={(e) => setIncomeDesc(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Valor (R$)</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Valor (R$)</label>
                 <input
                   type="number"
                   step="0.01"
                   placeholder="0.00"
                   value={incomeAmount}
                   onChange={(e) => setIncomeAmount(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Categoria da Receita</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Categoria da Receita</label>
                 <select
                   value={incomeCategory}
                   onChange={(e) => setIncomeCategory(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                 >
                   {INCOME_CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -693,11 +654,11 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Forma de Recebimento</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Forma de Recebimento</label>
                 <select
                   value={incomePaymentMethod}
                   onChange={(e) => setIncomePaymentMethod(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                 >
                   <option value="PIX">PIX</option>
                   <option value="Transferência">Transferência / TED</option>
@@ -713,6 +674,6 @@ export default function App() {
           </div>
         </div>
       )}
-    </div>
+    </Layout>
   );
 }
