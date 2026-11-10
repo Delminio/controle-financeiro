@@ -78,7 +78,7 @@ export default function App() {
   const [incomeCategory, setIncomeCategory] = useState(INCOME_CATEGORIES[0]);
   const [incomePaymentMethod, setIncomePaymentMethod] = useState('PIX');
 
-  // Dados carregados da API
+  // Dados do Servidor
   const [cardsList, setCardsList] = useState([]);
   const [accountsList, setAccountsList] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -98,7 +98,13 @@ export default function App() {
         setTransactions(json.transactions || []);
         setSummary(json.summary || { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 });
       }
-      if (cardRes && cardRes.ok) setCardsList(await cardRes.json());
+      if (cardRes && cardRes.ok) {
+        const cardsData = await cardRes.json();
+        setCardsList(cardsData);
+        if (cardsData.length > 0 && !expenseCardId) {
+          setExpenseCardId(cardsData[0].id);
+        }
+      }
       if (accRes && accRes.ok) setAccountsList(await accRes.json());
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
@@ -142,13 +148,16 @@ export default function App() {
     setUser({});
   };
 
-  // SUBMETER DESPESA
+  // LANÇAR DESPESA (-)
   const handleCreateExpense = async (e) => {
     e.preventDefault();
     if (!expenseDesc || !expenseAmount) return;
 
-    if (expensePaymentMethod === 'Cartão de Crédito' && !expenseCardId) {
-      alert('Selecione o cartão de crédito utilizado.');
+    const isCard = expensePaymentMethod === 'Cartão de Crédito';
+    const finalCardId = isCard ? (expenseCardId || (cardsList.length > 0 ? cardsList[0].id : null)) : null;
+
+    if (isCard && !finalCardId) {
+      alert('Por favor, cadastre um cartão de crédito primeiro na aba Cartões.');
       return;
     }
 
@@ -160,11 +169,11 @@ export default function App() {
           amount: parseFloat(expenseAmount),
           type: 'expense',
           category: expenseCategory,
-          account: accountsList.length > 0 ? accountsList[0].bank_name : 'Nubank',
+          account: accountsList.length > 0 ? accountsList[0].bank_name : 'Geral',
           account_id: accountsList.length > 0 ? parseInt(accountsList[0].id, 10) : null,
-          card_id: expensePaymentMethod === 'Cartão de Crédito' && expenseCardId ? parseInt(expenseCardId, 10) : null,
+          card_id: finalCardId ? parseInt(finalCardId, 10) : null,
           payment_method: expensePaymentMethod,
-          installment_total: expensePaymentMethod === 'Cartão de Crédito' ? parseInt(expenseInstallments, 10) || 1 : 1,
+          installment_total: isCard ? parseInt(expenseInstallments, 10) || 1 : 1,
           status: 'Pago'
         })
       });
@@ -172,7 +181,6 @@ export default function App() {
       if (res.ok) {
         setExpenseDesc('');
         setExpenseAmount('');
-        setExpenseCardId('');
         setShowExpenseModal(false);
         loadAppData();
         alert('Despesa lançada com sucesso!');
@@ -186,7 +194,7 @@ export default function App() {
     }
   };
 
-  // SUBMETER RECEITA
+  // LANÇAR RECEITA (+)
   const handleCreateIncome = async (e) => {
     e.preventDefault();
     if (!incomeDesc || !incomeAmount) return;
@@ -199,7 +207,7 @@ export default function App() {
           amount: parseFloat(incomeAmount),
           type: 'income',
           category: incomeCategory,
-          account: accountsList.length > 0 ? accountsList[0].bank_name : 'Nubank',
+          account: accountsList.length > 0 ? accountsList[0].bank_name : 'Geral',
           account_id: accountsList.length > 0 ? parseInt(accountsList[0].id, 10) : null,
           card_id: null,
           payment_method: incomePaymentMethod,
@@ -318,7 +326,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Navegação de Abas */}
+      {/* Navegação por Abas */}
       <nav className="bg-white border-b border-slate-200/60 px-6 py-3 flex gap-2 overflow-x-auto hide-scrollbar shadow-xs">
         {[
           { id: 'dashboard', label: '📊 Dashboard' },
@@ -357,7 +365,7 @@ export default function App() {
             <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-black text-slate-900">Visão Geral</h2>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">Resumo financeiro e movimentações</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">Resumo financeiro das movimentações</p>
               </div>
               <div className="flex items-center gap-3">
                 <button onClick={handleExportExcel} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs cursor-pointer">
@@ -470,7 +478,7 @@ export default function App() {
         {activeTab === 'profile' && <Profile />}
       </main>
 
-      {/* JANELA / MODAL 1: LANÇAR DESPESA (-) */}
+      {/* JANELA 1: LANÇAR DESPESA (-) */}
       {showExpenseModal && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">
@@ -546,12 +554,15 @@ export default function App() {
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                       required
                     >
-                      <option value="">Selecione o cartão...</option>
-                      {cardsList.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.bank_emitter} - {c.card_name} (Limite: R$ {parseFloat(c.card_limit).toFixed(2)})
-                        </option>
-                      ))}
+                      {cardsList.length === 0 ? (
+                        <option value="">Nenhum cartão cadastrado (Cadastre na aba Cartões)</option>
+                      ) : (
+                        cardsList.map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.bank_emitter} - {c.card_name} (Limite: R$ {parseFloat(c.card_limit).toFixed(2)})
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
 
@@ -578,7 +589,7 @@ export default function App() {
         </div>
       )}
 
-      {/* JANELA / MODAL 2: LANÇAR RECEITA (+) */}
+      {/* JANELA 2: LANÇAR RECEITA (+) */}
       {showIncomeModal && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">

@@ -81,23 +81,6 @@ const initDb = async () => {
       )
     `);
 
-    // Limpeza de restrições NOT_NULL antigas conflitantes em colunas legadas
-    await pool.query(`ALTER TABLE credit_cards ALTER COLUMN name DROP NOT NULL`).catch(() => {});
-    await pool.query(`ALTER TABLE credit_cards ALTER COLUMN credit_limit DROP NOT NULL`).catch(() => {});
-
-    // Garante que todas as colunas necessárias existam e tenham valores padrão seguros
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS account_id INT`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS card_name VARCHAR(100) DEFAULT 'Meu Cartão'`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS bank_emitter VARCHAR(100) DEFAULT 'Banco'`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS holder_name VARCHAR(100) DEFAULT 'Titular'`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS brand VARCHAR(50) DEFAULT 'Mastercard'`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS last_digits VARCHAR(4) DEFAULT '0000'`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS card_limit NUMERIC DEFAULT 0`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS closing_day INT DEFAULT 5`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS due_day INT DEFAULT 12`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS color_bg VARCHAR(100) DEFAULT 'from-purple-700 to-purple-950'`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS dark_mode BOOLEAN DEFAULT FALSE`);
-
     await pool.query(`
       CREATE TABLE IF NOT EXISTS transactions (
         id BIGINT PRIMARY KEY,
@@ -106,9 +89,9 @@ const initDb = async () => {
         amount NUMERIC NOT NULL,
         type VARCHAR(10) NOT NULL,
         category VARCHAR(100) DEFAULT 'Outros',
-        account VARCHAR(50) DEFAULT 'Nubank',
-        account_id INT REFERENCES bank_accounts(id) ON DELETE SET NULL,
-        card_id INT REFERENCES credit_cards(id) ON DELETE SET NULL,
+        account VARCHAR(50) DEFAULT 'Geral',
+        account_id INT,
+        card_id INT,
         person VARCHAR(50) DEFAULT 'Principal',
         payment_method VARCHAR(50) DEFAULT 'Dinheiro',
         status VARCHAR(20) DEFAULT 'Pago',
@@ -131,6 +114,11 @@ const initDb = async () => {
         status VARCHAR(20) DEFAULT 'Pendente'
       )
     `);
+
+    // Garantia de migração e permissão para nulos em chaves de transações
+    await pool.query(`ALTER TABLE transactions ALTER COLUMN account_id DROP NOT NULL`).catch(() => {});
+    await pool.query(`ALTER TABLE transactions ALTER COLUMN card_id DROP NOT NULL`).catch(() => {});
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS installment_total INT DEFAULT 1`).catch(() => {});
 
     console.log('Base de dados SaaS estruturada e atualizada com sucesso.');
   } catch (err) {
@@ -335,14 +323,26 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *
     `;
     const result = await pool.query(query, [
-      id, req.user.id, description, parseFloat(amount), type,
-      category || 'Outros', account || 'Nubank', account_id || null, card_id || null, person || 'Principal',
-      payment_method || 'Dinheiro', status || 'Pago', installment_current || 1, installment_total || 1, due_date || null
+      id, 
+      req.user.id, 
+      description, 
+      parseFloat(amount), 
+      type,
+      category || 'Outros', 
+      account || 'Geral', 
+      account_id ? parseInt(account_id, 10) : null, 
+      card_id ? parseInt(card_id, 10) : null, 
+      person || 'Principal',
+      payment_method || 'Dinheiro', 
+      status || 'Pago', 
+      installment_current || 1, 
+      installment_total || 1, 
+      due_date || null
     ]);
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Erro ao gravar transação:', err);
-    res.status(500).json({ error: 'Erro ao salvar lançamento na base de dados.' });
+    console.error('Erro detalhado ao gravar transação:', err);
+    res.status(500).json({ error: 'Erro no banco: ' + err.message });
   }
 });
 
