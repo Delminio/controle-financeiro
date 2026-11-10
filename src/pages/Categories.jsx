@@ -132,7 +132,7 @@ export default function Categories() {
               </div>
               <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-2xl font-extrabold text-xs shadow-lg shadow-emerald-200 transition cursor-pointer">
                 Criar Categoria
-              </Link>
+              </button>
             </form>
           </div>
         </div>
