@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from './services/api';
 import Sidebar from './components/Sidebar';
+
 import Categories from './pages/Categories';
+import Accounts from './pages/Accounts';
 import CreditCards from './pages/CreditCards';
 import Installments from './pages/Installments';
-import Investments from './pages/Investments';
-import Debts from './pages/Debts';
-import Goals from './pages/Goals';
-import Charts from './pages/Charts';
+import FixedExpenses from './pages/FixedExpenses';
+import CalendarView from './pages/CalendarView';
 import Forecast from './pages/Forecast';
+import Debts from './pages/Debts';
+import Investments from './pages/Investments';
+import Goals from './pages/Goals';
+import Budget from './pages/Budget';
+import Charts from './pages/Charts';
 import AIAssistant from './pages/AIAssistant';
 import Reports from './pages/Reports';
 import ExportExcel from './pages/ExportExcel';
+import Settings from './pages/Settings';
+import Profile from './pages/Profile';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -304,27 +311,46 @@ export default function App() {
             </div>
           )}
 
+          {activeSection === 'transactions' && (
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h2 className="text-base font-bold text-slate-800 mb-4 pb-3 border-b border-slate-100">Todos os Lançamentos ({data.transactions.length})</h2>
+              {data.transactions.length === 0 ? (
+                <p className="text-xs text-slate-400 py-8 text-center">Nenhum lançamento.</p>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {data.transactions.map(t => (
+                    <div key={t.id} className="py-3 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">{t.description}</p>
+                        <p className="text-[10px] text-slate-400">{t.person} • {t.account} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                      <span className={'text-xs font-bold ' + (t.type === 'income' ? 'text-emerald-600' : 'text-slate-700')}>
+                        {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeSection === 'charts' && <Charts />}
           {activeSection === 'categories' && <Categories />}
+          {activeSection === 'accounts' && <Accounts />}
           {activeSection === 'cards' && <CreditCards />}
           {activeSection === 'installments' && <Installments />}
-          {activeSection === 'investments' && <Investments />}
-          {activeSection === 'debts' && <Debts />}
-          {activeSection === 'goals' && <Goals />}
-          {activeSection === 'charts' && <Charts />}
+          {activeSection === 'fixed' && <FixedExpenses />}
+          {activeSection === 'calendar' && <CalendarView />}
           {activeSection === 'forecast' && <Forecast />}
+          {activeSection === 'debts' && <Debts />}
+          {activeSection === 'investments' && <Investments />}
+          {activeSection === 'goals' && <Goals />}
+          {activeSection === 'budget' && <Budget />}
           {activeSection === 'ai' && <AIAssistant />}
           {activeSection === 'reports' && <Reports />}
           {activeSection === 'export' && <ExportExcel />}
-
-          {!['dashboard', 'categories', 'cards', 'installments', 'investments', 'debts', 'goals', 'charts', 'forecast', 'ai', 'reports', 'export'].includes(activeSection) && (
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-16">
-              <span className="text-4xl block mb-3">🛠️</span>
-              <h3 className="font-bold text-slate-800 text-base mb-1">Módulo {activeSection}</h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Módulo isolado pronto para personalização em arquivo separado.
-              </p>
-            </div>
-          )}
+          {activeSection === 'settings' && <Settings />}
+          {activeSection === 'profile' && <Profile />}
         </main>
       </div>
 
