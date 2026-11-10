@@ -42,10 +42,19 @@
 
       function Dashboard() {
         const [data, setData] = useState({ summary: { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 }, transactions: [] });
-        const [activeTab, setActiveTab] = useState('overview');
+        const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'transactions', 'reports', 'accounts', 'settings'
+        
+        // Lista de pessoas com a Bernadete fixa no topo
         const [people, setPeople] = useState(['Bernadete (Mae)', 'Filho', 'Familia']);
         const [selectedPersonFilter, setSelectedPersonFilter] = useState('Todas');
         
+        // Modais de Pessoas
+        const [showPersonSettingsModal, setShowPersonSettingsModal] = useState(false);
+        const [editingPersonIndex, setEditingPersonIndex] = useState(null);
+        const [editingPersonName, setEditingPersonName] = useState('');
+        const [newPersonInput, setNewPersonInput] = useState('');
+
+        // Form States
         const [description, setDescription] = useState('');
         const [amount, setAmount] = useState('');
         const [type, setType] = useState('expense');
@@ -53,8 +62,6 @@
         const [person, setPerson] = useState('Bernadete (Mae)');
         
         const [showModal, setShowModal] = useState(false);
-        const [showPersonModal, setShowPersonModal] = useState(false);
-        const [newPersonName, setNewPersonName] = useState('');
         const [accountsList, setAccountsList] = useState([
           { name: 'Nubank', color: 'bg-purple-600', initial: 'Nu' },
           { name: 'Banco Inter', color: 'bg-orange-500', initial: 'In' },
@@ -118,15 +125,46 @@
           }
         };
 
+        // Funções de Gestão de Pessoas
         const handleAddPerson = (e) => {
           e.preventDefault();
-          if (!newPersonName.trim()) return;
-          if (!people.includes(newPersonName)) {
-            setPeople([...people, newPersonName]);
-            setPerson(newPersonName);
+          const name = newPersonInput.trim();
+          if (!name) return;
+          if (!people.includes(name)) {
+            setPeople([...people, name]);
           }
-          setNewPersonName('');
-          setShowPersonModal(false);
+          setNewPersonInput('');
+        };
+
+        const handleStartEditPerson = (index) => {
+          if (index === 0) return; // Bernadete não pode ser renomeada diretamente por regra de segurança
+          setEditingPersonIndex(index);
+          setEditingPersonName(people[index]);
+        };
+
+        const handleSaveEditPerson = (index) => {
+          const name = editingPersonName.trim();
+          if (!name) return;
+          const updated = [...people];
+          updated[index] = name;
+          setPeople(updated);
+          setEditingPersonIndex(null);
+          setEditingPersonName('');
+        };
+
+        const handleDeletePerson = (index) => {
+          if (index === 0) {
+            alert('A Bernadete e a pessoa principal do sistema e nao pode ser excluida!');
+            return;
+          }
+          const personToRemove = people[index];
+          if (confirm(`Deseja remover ${personToRemove} da lista?`)) {
+            const updated = people.filter((_, i) => i !== index);
+            setPeople(updated);
+            if (selectedPersonFilter === personToRemove) {
+              setSelectedPersonFilter('Todas');
+            }
+          }
         };
 
         const handleAddAccount = (e) => {
@@ -191,6 +229,12 @@
                   >
                     contas manuais
                   </button>
+                  <button 
+                    onClick={() => setActiveTab('settings')} 
+                    className={`pb-1 transition ${activeTab === 'settings' ? 'text-white border-b-2 border-white font-bold' : 'hover:text-white'}`}
+                  >
+                    configuracoes
+                  </button>
                 </nav>
 
                 <div className="flex items-center gap-2">
@@ -223,11 +267,11 @@
                       {people.map(p => <option key={p} value={p}>{p}</option>)}
                     </select>
                     <button 
-                      onClick={() => setShowPersonModal(true)}
-                      className="bg-brand-600 text-white w-5 h-5 rounded-lg flex items-center justify-center font-bold text-xs"
-                      title="Adicionar Pessoa"
+                      onClick={() => setShowPersonSettingsModal(true)}
+                      className="bg-brand-600 text-white px-2 py-0.5 rounded-lg flex items-center justify-center font-bold text-xs"
+                      title="Gerenciar Pessoas"
                     >
-                      +
+                      ⚙️ Pessoas
                     </button>
                   </div>
                 </div>
@@ -434,6 +478,64 @@
                 </div>
               )}
 
+              <!-- ABA 5: CONFIGURAÇÕES DE PESSOAS -->
+              {activeTab === 'settings' && (
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
+                  <h2 className="font-bold text-slate-800 text-base mb-2">Configuracao de Pessoas</h2>
+                  <p className="text-xs text-slate-500 mb-6">Gerencie quem pode ter contas ou despesas lancadas no sistema.</p>
+
+                  <form onSubmit={handleAddPerson} className="flex gap-2 mb-6">
+                    <input 
+                      type="text" 
+                      placeholder="Nome da nova pessoa..."
+                      value={newPersonInput}
+                      onChange={(e) => setNewPersonInput(e.target.value)}
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                    />
+                    <button type="submit" className="bg-brand-600 text-white text-xs px-4 py-2 rounded-xl font-bold">+ Adicionar</button>
+                  </form>
+
+                  <div className="divide-y divide-slate-100">
+                    {people.map((p, index) => (
+                      <div key={p} className="py-3 flex items-center justify-between">
+                        {editingPersonIndex === index ? (
+                          <div className="flex items-center gap-2 flex-1 mr-4">
+                            <input 
+                              type="text"
+                              value={editingPersonName}
+                              onChange={(e) => setEditingPersonName(e.target.value)}
+                              className="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold w-full"
+                            />
+                            <button onClick={() => handleSaveEditPerson(index)} className="bg-emerald-600 text-white text-xs px-3 py-1 rounded-lg font-bold">Salvar</button>
+                            <button onClick={() => setEditingPersonIndex(null)} className="text-xs text-slate-400 font-bold">Cancelar</button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-slate-800">{p}</span>
+                            {index === 0 && (
+                              <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Fixo (Mae)</span>
+                            )}
+                          </div>
+                        )}
+
+                        {editingPersonIndex !== index && (
+                          <div className="flex items-center gap-3">
+                            {index !== 0 ? (
+                              <>
+                                <button onClick={() => handleStartEditPerson(index)} className="text-xs text-brand-600 font-bold hover:underline">Editar</button>
+                                <button onClick={() => handleDeletePerson(index)} className="text-xs text-rose-500 font-bold hover:underline">Excluir</button>
+                              </>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 italic">Protegido</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </main>
 
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-2 flex justify-between items-center z-40">
@@ -455,12 +557,70 @@
                 <span className="text-lg">📊</span>
                 <span className="text-[10px]">Relatorios</span>
               </button>
-              <button onClick={() => setActiveTab('accounts')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'accounts' ? 'text-brand-600 font-bold' : 'text-slate-400'}`}>
-                <span className="text-lg">💳</span>
-                <span className="text-[10px]">Contas</span>
+              <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'settings' ? 'text-brand-600 font-bold' : 'text-slate-400'}`}>
+                <span className="text-lg">⚙️</span>
+                <span className="text-[10px]">Ajustes</span>
               </button>
             </div>
 
+            {/* MODAL CONFIGURAÇÃO RÁPIDA DE PESSOAS */}
+            {showPersonSettingsModal && (
+              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-xl border border-slate-100">
+                  <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+                    <h3 className="font-bold text-slate-800 text-sm">Gerenciar Pessoas</h3>
+                    <button onClick={() => setShowPersonSettingsModal(false)} className="text-slate-400 text-lg font-bold">✕</button>
+                  </div>
+
+                  <form onSubmit={handleAddPerson} className="flex gap-2 mb-4">
+                    <input
+                      type="text"
+                      placeholder="Adicionar nova pessoa..."
+                      value={newPersonInput}
+                      onChange={(e) => setNewPersonInput(e.target.value)}
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                    />
+                    <button type="submit" className="bg-brand-600 text-white text-xs px-3 py-2 rounded-xl font-bold">+ Criar</button>
+                  </form>
+
+                  <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto">
+                    {people.map((p, index) => (
+                      <div key={p} className="py-2.5 flex items-center justify-between">
+                        {editingPersonIndex === index ? (
+                          <div className="flex items-center gap-2 flex-1 mr-2">
+                            <input 
+                              type="text"
+                              value={editingPersonName}
+                              onChange={(e) => setEditingPersonName(e.target.value)}
+                              className="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold w-full"
+                            />
+                            <button onClick={() => handleSaveEditPerson(index)} className="bg-emerald-600 text-white text-xs px-2 py-1 rounded-lg font-bold">Ok</button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-800">{p}</span>
+                            {index === 0 && <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">Fixo</span>}
+                          </div>
+                        )}
+
+                        {editingPersonIndex !== index && (
+                          <div className="flex items-center gap-2">
+                            {index !== 0 && (
+                              <>
+                                <button onClick={() => handleStartEditPerson(index)} className="text-[11px] text-brand-600 font-bold">Editar</button>
+                                <button onClick={() => handleDeletePerson(index)} className="text-[11px] text-rose-500 font-bold">Excluir</button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MODAL NOVO LANÇAMENTO */}
             {showModal && (
               <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                 <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-xl border border-slate-100">
@@ -545,34 +705,6 @@
                       className="bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-200 transition"
                     >
                       {loading ? 'Salvando...' : 'Confirmar Lancamento'}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {showPersonModal && (
-              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                <div className="bg-white w-full max-w-sm rounded-2xl p-5 shadow-xl border border-slate-100">
-                  <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-                    <h3 className="font-bold text-slate-800 text-sm">Adicionar Nova Pessoa</h3>
-                    <button onClick={() => setShowPersonModal(false)} className="text-slate-400 text-lg font-bold">✕</button>
-                  </div>
-
-                  <form onSubmit={handleAddPerson} className="flex flex-col gap-3">
-                    <input
-                      type="text"
-                      placeholder="Nome da Pessoa (ex: Carlos, Joana)"
-                      value={newPersonName}
-                      onChange={(e) => setNewPersonName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
-                      required
-                    />
-                    <button
-                      type="submit"
-                      className="bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-200 transition"
-                    >
-                      Adicionar Pessoa
                     </button>
                   </form>
                 </div>
