@@ -115,7 +115,8 @@ const initDb = async () => {
       )
     `);
 
-    // Migrações automáticas caso as tabelas já existam sem estas colunas
+    // Migrações automáticas para garantir todas as colunas necessárias na base existente
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS account_id INT REFERENCES bank_accounts(id) ON DELETE CASCADE`);
     await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS color_bg VARCHAR(100) DEFAULT 'from-purple-700 to-purple-950'`);
     await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS dark_mode BOOLEAN DEFAULT FALSE`);
     await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS brand VARCHAR(50) DEFAULT 'Mastercard'`);
