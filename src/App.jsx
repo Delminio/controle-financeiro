@@ -20,49 +20,58 @@ import Settings from './pages/Settings';
 import Sidebar from './components/Sidebar';
 import { fetchWithAuth } from './services/api';
 
+const DEFAULT_EXPENSE_CATEGORIES = ['Mercado', 'Aluguel', 'Transporte', 'Lazer', 'Saúde', 'Educação', 'Restaurante', 'Contas Fixas', 'Outros'];
+const DEFAULT_INCOME_CATEGORIES = ['Salário', 'Freelance', 'Investimentos', 'Vendas', 'Rendimento', 'Outros'];
+
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Estados de Autenticação / Login
+  // Autenticação
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [authError, setAuthError] = useState('');
 
-  // Estados do Modal de Novo Lançamento Global
+  // Modal de Transações
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [transType, setTransType] = useState('expense');
+  const [transType, setTransType] = useState('expense'); // 'expense' ou 'income'
   const [category, setCategory] = useState('Mercado');
-  const [account, setAccount] = useState('Nubank');
   const [paymentMethod, setPaymentMethod] = useState('Dinheiro');
   const [cardId, setCardId] = useState('');
+  const [installmentsTotal, setInstallmentsTotal] = useState('1');
+
+  // Dados carregados da API
   const [cardsList, setCardsList] = useState([]);
   const [accountsList, setAccountsList] = useState([]);
+  const [categoriesList, setCategoriesList] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [summary, setSummary] = useState({ totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 });
 
   const loadAppData = async () => {
     if (!token) return;
     try {
-      const [transRes, cardRes, accRes] = await Promise.all([
+      const [transRes, cardRes, accRes, catRes] = await Promise.all([
         fetchWithAuth('/transactions'),
         fetchWithAuth('/credit-cards'),
-        fetchWithAuth('/bank-accounts')
+        fetchWithAuth('/bank-accounts'),
+        fetchWithAuth('/categories').catch(() => null)
       ]);
-      if (transRes.ok) {
+
+      if (transRes && transRes.ok) {
         const json = await transRes.json();
         setTransactions(json.transactions || []);
         setSummary(json.summary || { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 });
       }
-      if (cardRes.ok) setCardsList(await cardRes.json());
-      if (accRes.ok) setAccountsList(await accRes.json());
+      if (cardRes && cardRes.ok) setCardsList(await cardRes.json());
+      if (accRes && accRes.ok) setAccountsList(await accRes.json());
+      if (catRes && catRes.ok) setCategoriesList(await catRes.json());
     } catch (err) {
-      console.error(err);
+      console.error('Erro ao carregar dados:', err);
     }
   };
 
@@ -71,6 +80,19 @@ export default function App() {
       loadAppData();
     }
   }, [token]);
+
+  // Alterna o padrão de categoria quando muda entre Despesa e Receita
+  const handleTypeChange = (type) => {
+    setTransType(type);
+    if (type === 'income') {
+      setCategory('Salário');
+      setPaymentMethod('PIX');
+      setCardId('');
+    } else {
+      setCategory('Mercado');
+      setPaymentMethod('Dinheiro');
+    }
+  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -107,6 +129,11 @@ export default function App() {
     e.preventDefault();
     if (!description || !amount) return;
 
+    if (transType === 'expense' && paymentMethod === 'Cartão de Crédito' && !cardId) {
+      alert('Selecione um cartão de crédito válido.');
+      return;
+    }
+
     try {
       const res = await fetchWithAuth('/transactions', {
         method: 'POST',
@@ -117,8 +144,9 @@ export default function App() {
           category,
           account: accountsList.length > 0 ? accountsList[0].bank_name : 'Nubank',
           account_id: accountsList.length > 0 ? accountsList[0].id : null,
-          card_id: paymentMethod === 'Cartão de Crédito' && cardId ? parseInt(cardId, 10) : null,
+          card_id: transType === 'expense' && paymentMethod === 'Cartão de Crédito' && cardId ? parseInt(cardId, 10) : null,
           payment_method: paymentMethod,
+          installment_total: transType === 'expense' && paymentMethod === 'Cartão de Crédito' ? parseInt(installmentsTotal, 10) || 1 : 1,
           status: 'Pago'
         })
       });
@@ -130,7 +158,8 @@ export default function App() {
         loadAppData();
         alert('Lançamento efetuado com sucesso!');
       } else {
-        alert('Erro ao salvar lançamento.');
+        const errJson = await res.json();
+        alert(errJson.error || 'Erro ao salvar lançamento.');
       }
     } catch (err) {
       console.error(err);
@@ -207,9 +236,14 @@ export default function App() {
 
   const formatMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
+  // Lista dinâmica de categorias com base nas existentes e no tipo de transação
+  const availableCategories = transType === 'expense'
+    ? Array.from(new Set([...DEFAULT_EXPENSE_CATEGORIES, ...categoriesList.map(c => c.name || c)]))
+    : Array.from(new Set([...DEFAULT_INCOME_CATEGORIES, ...categoriesList.map(c => c.name || c)]));
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      {/* Topo / Header */}
+      {/* Header Superior */}
       <header className="bg-white border-b border-slate-200/80 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-base shadow-md">
@@ -271,10 +305,10 @@ export default function App() {
             <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-black text-slate-900">Visão Geral</h2>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">Resumo financeiro das suas contas e movimentações reais</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">Resumo financeiro de contas e lançamentos</p>
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={handleExportExcel} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-xs transition cursor-pointer">
+                <button onClick={handleExportExcel} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-xs cursor-pointer">
                   📥 Exportar Excel
                 </button>
                 <button onClick={() => setShowTransactionModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-md cursor-pointer transition">
@@ -378,7 +412,7 @@ export default function App() {
         {activeTab === 'profile' && <Profile />}
       </main>
 
-      {/* Modal Global de Novo Lançamento (Com suporte a Cartão de Crédito) */}
+      {/* Modal de Novo Lançamento Corrigido */}
       {showTransactionModal && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">
@@ -386,12 +420,13 @@ export default function App() {
               <h3 className="font-bold text-slate-800 text-sm">Novo Lançamento</h3>
               <button onClick={() => setShowTransactionModal(false)} className="text-slate-400 font-bold cursor-pointer">✕</button>
             </div>
+            
             <form onSubmit={handleCreateTransaction} className="flex flex-col gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Descrição</label>
                 <input
                   type="text"
-                  placeholder="Ex: Supermercado, Salário"
+                  placeholder="Ex: Mercado, Luz, Salário"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
@@ -412,33 +447,39 @@ export default function App() {
                 />
               </div>
 
-              <div className="flex gap-2">
+              {/* BOTOES DESPESA / RECEITA COM LOGICA SEPARADA */}
+              <div className="flex gap-2 my-1">
                 <button
                   type="button"
-                  onClick={() => setTransType('expense')}
-                  className={`flex-1 py-2 rounded-xl text-xs font-extrabold cursor-pointer ${transType === 'expense' ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-600'}`}
+                  onClick={() => handleTypeChange('expense')}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${transType === 'expense' ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-100 text-slate-600'}`}
                 >
                   Despesa (-)
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTransType('income')}
-                  className={`flex-1 py-2 rounded-xl text-xs font-extrabold cursor-pointer ${transType === 'income' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}
+                  onClick={() => handleTypeChange('income')}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${transType === 'income' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 text-slate-600'}`}
                 >
                   Receita (+)
                 </button>
               </div>
 
+              {/* CATEGORIA DINAMICA SEGUNDO O TIPO */}
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Categoria</label>
-                <input
-                  type="text"
+                <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
-                />
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                >
+                  {availableCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
               </div>
 
+              {/* FORMA DE PAGAMENTO */}
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Forma de Pagamento</label>
                 <select
@@ -449,31 +490,47 @@ export default function App() {
                   <option value="Dinheiro">Dinheiro</option>
                   <option value="PIX">PIX</option>
                   <option value="Débito">Débito</option>
-                  <option value="Cartão de Crédito">Cartão de Crédito</option>
+                  {transType === 'expense' && <option value="Cartão de Crédito">Cartão de Crédito</option>}
                   <option value="Outros">Outros</option>
                 </select>
               </div>
 
-              {paymentMethod === 'Cartão de Crédito' && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Selecionar Cartão</label>
-                  <select
-                    value={cardId}
-                    onChange={(e) => setCardId(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
-                    required
-                  >
-                    <option value="">Selecione o cartão...</option>
-                    {cardsList.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.bank_emitter} - {c.card_name} (Limite: R$ {parseFloat(c.card_limit).toFixed(2)})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* SELECAO DE CARTAO E PARCELAMENTO (SO APARECE EM DESPESA + CARTAO DE CREDITO) */}
+              {transType === 'expense' && paymentMethod === 'Cartão de Crédito' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Selecionar Cartão</label>
+                    <select
+                      value={cardId}
+                      onChange={(e) => setCardId(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                      required
+                    >
+                      <option value="">Selecione o cartão...</option>
+                      {cardsList.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.bank_emitter} - {c.card_name} (Limite: R$ {parseFloat(c.card_limit).toFixed(2)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Número de Parcelas</label>
+                    <select
+                      value={installmentsTotal}
+                      onChange={(e) => setInstallmentsTotal(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                    >
+                      {[1,2,3,4,5,6,7,8,9,10,11,12].map(num => (
+                        <option key={num} value={num}>{num}x {num === 1 ? '(À vista)' : 'sem juros'}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
               )}
 
-              <button type="submit" className="mt-2 bg-emerald-600 text-white font-extrabold text-xs py-3 rounded-2xl shadow-md cursor-pointer">
+              <button type="submit" className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3 rounded-2xl shadow-md cursor-pointer transition">
                 Confirmar Lançamento
               </button>
             </form>
