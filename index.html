@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle Financeiro</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & React DOM CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel para compilar JSX no navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      function Dashboard() {
+        const [data, setData] = useState({ summary: { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 }, transactions: [] });
+        const [description, setDescription] = useState('');
+        const [amount, setAmount] = useState('');
+        const [type, setType] = useState('expense');
+
+        const API_URL = 'https://controle-financeiro-x8ah.onrender.com/api/transactions';
+
+        const fetchData = async () => {
+          try {
+            const res = await fetch(API_URL);
+            const json = await res.json();
+            setData(json);
+          } catch (err) {
+            console.error(err);
+          }
+        };
+
+        useEffect(() => {
+          fetchData();
+        }, []);
+
+        const handleSubmit = async (e) => {
+          e.preventDefault();
+          if (!description || !amount) return;
+
+          await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description, amount: parseFloat(amount), type })
+          });
+
+          setDescription('');
+          setAmount('');
+          fetchData();
+        };
+
+        return (
+          <div className="max-w-md mx-auto p-4 min-h-screen">
+            <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Controle Financeiro</h1>
+
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              <div className="bg-green-100 p-3 rounded text-center">
+                <span className="text-xs text-green-700 font-bold block">Entradas</span>
+                <span className="text-sm font-semibold text-green-800">R$ {data.summary.totalReceitas.toFixed(2)}</span>
+              </div>
+              <div className="bg-red-100 p-3 rounded text-center">
+                <span className="text-xs text-red-700 font-bold block">Saídas</span>
+                <span className="text-sm font-semibold text-red-800">R$ {data.summary.totalDespesas.toFixed(2)}</span>
+              </div>
+              <div className="bg-blue-100 p-3 rounded text-center">
+                <span className="text-xs text-blue-700 font-bold block">Saldo</span>
+                <span className={`text-sm font-bold ${data.summary.saldoFinal >= 0 ? 'text-blue-800' : 'text-red-600'}`}>
+                  R$ {data.summary.saldoFinal.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="bg-white p-4 rounded-lg shadow-sm mb-6 flex flex-col gap-3">
+              <input
+                type="text"
+                placeholder="Descrição (ex: Mercado, Luz)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="border p-2 rounded w-full text-sm"
+              />
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Valor (R$)"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="border p-2 rounded w-full text-sm"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setType('expense')}
+                  className={`flex-1 py-2 rounded text-sm font-semibold ${type === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                >
+                  Despesa (-)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setType('income')}
+                  className={`flex-1 py-2 rounded text-sm font-semibold ${type === 'income' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                >
+                  Receita (+)
+                </button>
+              </div>
+              <button type="submit" className="bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700 text-sm">
+                Lançar
+              </button>
+            </form>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h2 className="font-semibold mb-3 text-sm text-gray-700">Lançamentos</h2>
+              <ul className="divide-y">
+                {data.transactions.map((t) => (
+                  <li key={t.id} className="py-2 flex justify-between items-center text-sm">
+                    <span className="text-gray-700">{t.description}</span>
+                    <span className={`font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                      {t.type === 'income' ? '+' : '-'} R$ {Number(t.amount).toFixed(2)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<Dashboard />);
+    </script>
+  </body>
+</html>
