@@ -4,12 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Organize Financeiro</title>
-    <!-- Manifest & Tema para virar App (PWA) -->
     <meta name="theme-color" content="#10b981" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -28,7 +26,6 @@
       }
     </script>
     
-    <!-- React & React DOM CDN -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -103,7 +100,6 @@
 
         return (
           <div className="min-h-screen">
-            <!-- Header Topo Verde Estilo Organizze -->
             <header className="bg-brand-600 text-white shadow-md">
               <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -129,7 +125,6 @@
               </div>
             </header>
 
-            <!-- Faixa de Saudação & Resumo Rápido -->
             <div className="bg-white border-b border-slate-200">
               <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -151,12 +146,8 @@
               </div>
             </div>
 
-            <!-- Conteúdo Principal - Grid 2 Colunas no Desktop -->
             <main className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-12 gap-6">
-              
-              <!-- Coluna Esquerda: Saldo Geral + Minhas Contas -->
               <div className="md:col-span-7 flex flex-col gap-6">
-                <!-- Card Saldo Geral -->
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md uppercase tracking-wider">
@@ -168,7 +159,6 @@
                   </div>
                 </div>
 
-                <!-- Lista de Contas Manuais -->
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="font-bold text-slate-800 text-sm">Minhas Contas (Manuais)</h2>
@@ -205,7 +195,6 @@
                 </div>
               </div>
 
-              <!-- Coluna Direita: Histórico de Lançamentos -->
               <div className="md:col-span-5 flex flex-col gap-6">
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                   <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
@@ -243,10 +232,8 @@
                   )}
                 </div>
               </div>
-
             </main>
 
-            <!-- Bottom Navigation Bar (Visual NATIVO DE APP no Celular) -->
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2 flex justify-between items-center z-40">
               <button className="flex flex-col items-center gap-0.5 text-brand-600">
                 <span className="text-lg">🏠</span>
@@ -272,10 +259,9 @@
               </button>
             </div>
 
-            <!-- Modal de Novo Lançamento -->
             {showModal && (
               <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+                <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-xl border border-slate-100">
                   <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
                     <h3 className="font-bold text-slate-800 text-sm">Novo Lançamento</h3>
                     <button onClick={() => setShowModal(false)} className="text-slate-400 text-lg font-bold">✕</button>
@@ -353,7 +339,6 @@
                 </div>
               </div>
             )}
-
           </div>
         );
       }
