@@ -1,6 +1,6 @@
 {
   "name": "controle-financeiro-backend",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "API Completa de Gestão Financeira Pessoal Multi-tenant",
   "main": "server.js",
   "scripts": {
@@ -11,6 +11,7 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.11.5"
+    "pg": "^8.11.5",
+    "xlsx": "^0.18.5"
   }
 }
