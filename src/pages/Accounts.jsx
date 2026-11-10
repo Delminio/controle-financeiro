@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../services/api';
 
+const BANK_STYLES = {
+  'Nubank': { bg: 'bg-purple-700', text: 'text-white' },
+  'Inter': { bg: 'bg-orange-500', text: 'text-white' },
+  'Bradesco': { bg: 'bg-red-600', text: 'text-white' },
+  'Santander': { bg: 'bg-red-700', text: 'text-white' },
+  'Itaú': { bg: 'bg-orange-600', text: 'text-white' },
+  'Banco do Brasil': { bg: 'bg-yellow-500', text: 'text-blue-950' },
+  'C6 Bank': { bg: 'bg-slate-900', text: 'text-white' },
+  'Neon': { bg: 'bg-cyan-500', text: 'text-white' },
+  'XP': { bg: 'bg-black', text: 'text-white' },
+  'Carteira': { bg: 'bg-emerald-600', text: 'text-white' }
+};
+
 export default function Accounts() {
   const [accounts, setAccounts] = useState([]);
   const [people, setPeople] = useState([]);
@@ -98,13 +111,15 @@ export default function Accounts() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {accounts.map(acc => {
+            const style = BANK_STYLES[acc.bank_name] || { bg: 'bg-slate-800', text: 'text-white' };
             const accCards = cards.filter(c => c.account_id === acc.id);
+
             return (
               <div key={acc.id} className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-purple-700 text-white flex items-center justify-center font-black text-sm shadow-md">
+                      <div className={`w-11 h-11 rounded-2xl ${style.bg} ${style.text} flex items-center justify-center font-black text-xs shadow-md`}>
                         {acc.bank_name.substring(0, 2).toUpperCase()}
                       </div>
                       <div>
@@ -152,18 +167,18 @@ export default function Accounts() {
                 <select
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                 >
-                  <option value="Nubank">Nubank</option>
-                  <option value="Inter">Inter</option>
-                  <option value="Bradesco">Bradesco</option>
-                  <option value="Santander">Santander</option>
-                  <option value="Itaú">Itaú</option>
-                  <option value="Banco do Brasil">Banco do Brasil</option>
-                  <option value="C6 Bank">C6 Bank</option>
-                  <option value="Neon">Neon</option>
-                  <option value="XP">XP</option>
-                  <option value="Carteira">Carteira (Dinheiro)</option>
+                  <option value="Nubank">Nubank (Roxo)</option>
+                  <option value="Inter">Inter (Laranja)</option>
+                  <option value="Bradesco">Bradesco (Vermelho)</option>
+                  <option value="Santander">Santander (Vermelho)</option>
+                  <option value="Itaú">Itaú (Laranja)</option>
+                  <option value="Banco do Brasil">Banco do Brasil (Amarelo)</option>
+                  <option value="C6 Bank">C6 Bank (Cinza/Preto)</option>
+                  <option value="Neon">Neon (Azul)</option>
+                  <option value="XP">XP (Preto)</option>
+                  <option value="Carteira">Carteira (Verde)</option>
                 </select>
               </div>
 
@@ -172,7 +187,7 @@ export default function Accounts() {
                 <select
                   value={accountType}
                   onChange={(e) => setAccountType(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                 >
                   <option value="Conta Corrente">Conta Corrente</option>
                   <option value="Conta Poupança">Conta Poupança</option>
@@ -186,7 +201,7 @@ export default function Accounts() {
                 <select
                   value={personId}
                   onChange={(e) => setPersonId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                   required
                 >
                   {people.map(p => (

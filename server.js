@@ -108,14 +108,21 @@ const initDb = async () => {
         user_id INT REFERENCES users(id) ON DELETE CASCADE,
         title VARCHAR(150) NOT NULL,
         description TEXT,
-        event_type VARCHAR(50) DEFAULT 'financeiro', -- dívida, recebimento, evento
+        event_type VARCHAR(50) DEFAULT 'financeiro',
         amount NUMERIC DEFAULT 0,
         event_date DATE NOT NULL,
         status VARCHAR(20) DEFAULT 'Pendente'
       )
     `);
 
-    console.log('Base de dados SaaS estruturada com sucesso.');
+    // Migrações automáticas caso as tabelas já existam sem estas colunas
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS color_bg VARCHAR(100) DEFAULT 'from-purple-700 to-purple-950'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS dark_mode BOOLEAN DEFAULT FALSE`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS brand VARCHAR(50) DEFAULT 'Mastercard'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS last_digits VARCHAR(4) DEFAULT '0000'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS closing_day INT DEFAULT 5`);
+
+    console.log('Base de dados SaaS estruturada e atualizada com sucesso.');
   } catch (err) {
     console.error('Erro ao inicializar base de dados:', err);
   }
@@ -251,18 +258,19 @@ app.get('/api/credit-cards', authenticateToken, async (req, res) => {
 
 app.post('/api/credit-cards', authenticateToken, async (req, res) => {
   const { account_id, card_name, bank_emitter, holder_name, brand, last_digits, card_limit, closing_day, due_day, color_bg, dark_mode } = req.body;
-  if (!account_id || !card_name || !card_limit || !due_day) {
-    return res.status(400).json({ error: 'Preencha todos os campos obrigatórios do cartão.' });
+  if (!account_id || !card_name || !card_limit) {
+    return res.status(400).json({ error: 'Preencha os campos obrigatórios do cartão.' });
   }
 
   try {
     const result = await pool.query(
       `INSERT INTO credit_cards (user_id, account_id, card_name, bank_emitter, holder_name, brand, last_digits, card_limit, closing_day, due_day, color_bg, dark_mode)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-      [req.user.id, account_id, card_name, bank_emitter, holder_name, brand || 'Mastercard', last_digits || '0000', parseFloat(card_limit), closing_day || 5, due_day, color_bg || 'from-purple-700 to-purple-950', dark_mode || false]
+      [req.user.id, account_id, card_name, bank_emitter, holder_name, brand || 'Mastercard', last_digits || '0000', parseFloat(card_limit), closing_day || 5, due_day || 10, color_bg || 'from-purple-700 to-purple-950', dark_mode || false]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
+    console.error('Erro ao gravar cartão:', err);
     res.status(500).json({ error: 'Erro ao cadastrar cartão de crédito.' });
   }
 });
@@ -354,6 +362,34 @@ app.delete('/api/calendar-events/:id', authenticateToken, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao apagar evento.' });
+  }
+});
+
+// Exportar Excel
+app.get('/api/export/excel', authenticateToken, async (req, res) => {
+  try {
+    const transResult = await pool.query('SELECT description, amount, type, category, account, person, status, date FROM transactions WHERE user_id = $1 ORDER BY date DESC', [req.user.id]);
+    const formattedTrans = transResult.rows.map(t => ({
+      Descrição: t.description,
+      'Valor (R$)': parseFloat(t.amount),
+      Tipo: t.type === 'income' ? 'Receita' : 'Despesa',
+      Categoria: t.category,
+      Conta: t.account,
+      Pessoa: t.person,
+      Status: t.status,
+      Data: new Date(t.date).toLocaleDateString('pt-BR')
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    const sheetTrans = XLSX.utils.json_to_sheet(formattedTrans);
+    XLSX.utils.book_append_sheet(workbook, sheetTrans, 'Lançamentos');
+
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="Relatorio_Financeiro.xlsx"');
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao gerar arquivo Excel.' });
   }
 });
 
