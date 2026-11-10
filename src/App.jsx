@@ -345,6 +345,7 @@ export default function App() {
           {activeSection === 'debts' && <Debts />}
           {activeSection === 'investments' && <Investments />}
           {activeSection === 'goals' && <Goals />}
+          {activeSection === 'emergency' && <Investments />}
           {activeSection === 'budget' && <Budget />}
           {activeSection === 'ai' && <AIAssistant />}
           {activeSection === 'reports' && <Reports />}
