@@ -3,13 +3,17 @@ import { fetchWithAuth } from './services/api';
 import Sidebar from './components/Sidebar';
 import Categories from './pages/Categories';
 import CreditCards from './pages/CreditCards';
+import Installments from './pages/Installments';
+import Investments from './pages/Investments';
+import Debts from './pages/Debts';
+import Goals from './pages/Goals';
 import ExportExcel from './pages/ExportExcel';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || 'null'));
   const [authMode, setAuthMode] = useState('login');
-  
+
   const [authName, setAuthName] = useState('');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -56,7 +60,7 @@ export default function App() {
       localStorage.setItem('user', JSON.stringify(json.user));
     } catch (err) {
       setAuthError(err.message);
-    } fontally {
+    } finally {
       setAuthLoading(false);
     }
   };
@@ -124,9 +128,7 @@ export default function App() {
     window.open(`${API_URL}/export/excel?token=${token}`, '_blank');
   };
 
-  const formatMoney = (val) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
-  };
+  const formatMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
   if (!token) {
     return (
@@ -300,9 +302,13 @@ export default function App() {
 
           {activeSection === 'categories' && <Categories />}
           {activeSection === 'cards' && <CreditCards />}
+          {activeSection === 'installments' && <Installments />}
+          {activeSection === 'investments' && <Investments />}
+          {activeSection === 'debts' && <Debts />}
+          {activeSection === 'goals' && <Goals />}
           {activeSection === 'export' && <ExportExcel />}
 
-          {!['dashboard', 'categories', 'cards', 'export'].includes(activeSection) && (
+          {!['dashboard', 'categories', 'cards', 'installments', 'investments', 'debts', 'goals', 'export'].includes(activeSection) && (
             <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-16">
               <span className="text-4xl block mb-3">🛠️</span>
               <h3 className="font-bold text-slate-800 text-base mb-1">Módulo {activeSection}</h3>
