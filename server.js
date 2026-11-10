@@ -258,6 +258,7 @@ app.get('/api/credit-cards', authenticateToken, async (req, res) => {
 
 app.post('/api/credit-cards', authenticateToken, async (req, res) => {
   const { account_id, card_name, bank_emitter, holder_name, brand, last_digits, card_limit, closing_day, due_day, color_bg, dark_mode } = req.body;
+  
   if (!account_id || !card_name || !card_limit) {
     return res.status(400).json({ error: 'Preencha os campos obrigatórios do cartão.' });
   }
@@ -266,12 +267,25 @@ app.post('/api/credit-cards', authenticateToken, async (req, res) => {
     const result = await pool.query(
       `INSERT INTO credit_cards (user_id, account_id, card_name, bank_emitter, holder_name, brand, last_digits, card_limit, closing_day, due_day, color_bg, dark_mode)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-      [req.user.id, account_id, card_name, bank_emitter, holder_name, brand || 'Mastercard', last_digits || '0000', parseFloat(card_limit), closing_day || 5, due_day || 10, color_bg || 'from-purple-700 to-purple-950', dark_mode || false]
+      [
+        req.user.id, 
+        parseInt(account_id, 10), 
+        card_name, 
+        bank_emitter || 'Banco', 
+        holder_name || 'Titular', 
+        brand || 'Mastercard', 
+        last_digits || '0000', 
+        parseFloat(card_limit), 
+        parseInt(closing_day, 10) || 5, 
+        parseInt(due_day, 10) || 10, 
+        color_bg || 'from-purple-700 to-purple-950', 
+        Boolean(dark_mode)
+      ]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Erro ao gravar cartão:', err);
-    res.status(500).json({ error: 'Erro ao cadastrar cartão de crédito.' });
+    console.error('Erro detalhado ao gravar cartão:', err);
+    res.status(500).json({ error: 'Erro ao cadastrar cartão de crédito: ' + err.message });
   }
 });
 
