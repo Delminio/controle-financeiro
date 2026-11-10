@@ -42,18 +42,16 @@
 
       function Dashboard() {
         const [data, setData] = useState({ summary: { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 }, transactions: [] });
-        const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'transactions', 'reports', 'accounts'
-        const [people, setPeople] = useState(['Bernadete (Mãe)', 'Filho', 'Família']);
+        const [activeTab, setActiveTab] = useState('overview');
+        const [people, setPeople] = useState(['Bernadete (Mae)', 'Filho', 'Familia']);
         const [selectedPersonFilter, setSelectedPersonFilter] = useState('Todas');
         
-        // Form States
         const [description, setDescription] = useState('');
         const [amount, setAmount] = useState('');
         const [type, setType] = useState('expense');
         const [account, setAccount] = useState('Nubank');
-        const [person, setPerson] = useState('Bernadete (Mãe)');
+        const [person, setPerson] = useState('Bernadete (Mae)');
         
-        // Modals & New Entries
         const [showModal, setShowModal] = useState(false);
         const [showPersonModal, setShowPersonModal] = useState(false);
         const [newPersonName, setNewPersonName] = useState('');
@@ -73,7 +71,7 @@
             const json = await res.json();
             setData(json);
           } catch (err) {
-            console.error('Erro ao buscar transações:', err);
+            console.error(err);
           }
         };
 
@@ -111,7 +109,7 @@
         };
 
         const handleDelete = async (id) => {
-          if (!confirm('Deseja apagar este lançamento?')) return;
+          if (!confirm('Deseja apagar este lancamento?')) return;
           try {
             await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
             fetchData();
@@ -141,7 +139,7 @@
 
         const filteredTransactions = selectedPersonFilter === 'Todas'
           ? data.transactions
-          : data.transactions.filter(t => (t.person || 'Bernadete (Mãe)') === selectedPersonFilter);
+          : data.transactions.filter(t => (t.person || 'Bernadete (Mae)') === selectedPersonFilter);
 
         const totalReceitas = filteredTransactions
           .filter(t => t.type === 'income')
@@ -159,7 +157,6 @@
 
         return (
           <div className="min-h-screen">
-            <!-- Header Verde -->
             <header className="bg-brand-600 text-white shadow-md">
               <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -169,25 +166,24 @@
                   <span className="font-bold text-xl tracking-tight">organize</span>
                 </div>
 
-                <!-- Abas Desktop -->
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-emerald-100">
                   <button 
                     onClick={() => setActiveTab('overview')} 
                     className={`pb-1 transition ${activeTab === 'overview' ? 'text-white border-b-2 border-white font-bold' : 'hover:text-white'}`}
                   >
-                    visão geral
+                    visao geral
                   </button>
                   <button 
                     onClick={() => setActiveTab('transactions')} 
                     className={`pb-1 transition ${activeTab === 'transactions' ? 'text-white border-b-2 border-white font-bold' : 'hover:text-white'}`}
                   >
-                    lançamentos
+                    lancamentos
                   </button>
                   <button 
                     onClick={() => setActiveTab('reports')} 
                     className={`pb-1 transition ${activeTab === 'reports' ? 'text-white border-b-2 border-white font-bold' : 'hover:text-white'}`}
                   >
-                    relatórios
+                    relatorios
                   </button>
                   <button 
                     onClick={() => setActiveTab('accounts')} 
@@ -208,16 +204,14 @@
               </div>
             </header>
 
-            <!-- Subheader: Filtro de Pessoa & Resumo -->
             <div className="bg-white border-b border-slate-200">
               <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div>
-                    <h1 className="text-lg font-bold text-slate-800">Olá, Bernadete! 👋</h1>
+                    <h1 className="text-lg font-bold text-slate-800">Ola, Bernadete! 👋</h1>
                     <p className="text-xs text-slate-500">Controle de receitas e despesas</p>
                   </div>
                   
-                  <!-- Seletor de Pessoa -->
                   <div className="ml-2 flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                     <span className="text-[11px] font-bold text-slate-500 pl-2">Pessoa:</span>
                     <select 
@@ -252,10 +246,8 @@
               </div>
             </div>
 
-            <!-- Conteúdo Dinâmico por Aba -->
             <main className="max-w-6xl mx-auto px-4 py-6">
 
-              <!-- ABA 1: VISÃO GERAL -->
               {activeTab === 'overview' && (
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                   <div className="md:col-span-7 flex flex-col gap-6">
@@ -302,12 +294,12 @@
                   <div className="md:col-span-5 flex flex-col gap-6">
                     <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                       <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                        <h2 className="font-bold text-slate-800 text-sm">Últimos Lançamentos</h2>
+                        <h2 className="font-bold text-slate-800 text-sm">Ultimos Lancamentos</h2>
                         <button onClick={() => setActiveTab('transactions')} className="text-xs text-brand-600 font-bold">Ver todos</button>
                       </div>
 
                       {filteredTransactions.length === 0 ? (
-                        <div className="py-8 text-center text-slate-400 text-xs">Nenhum lançamento.</div>
+                        <div className="py-8 text-center text-slate-400 text-xs">Nenhum lancamento.</div>
                       ) : (
                         <div className="divide-y divide-slate-100 max-h-[350px] overflow-y-auto hide-scrollbar">
                           {filteredTransactions.slice(0, 5).map((t) => (
@@ -337,16 +329,15 @@
                 </div>
               )}
 
-              <!-- ABA 2: LANÇAMENTOS (LISTA COMPLETA & EXCLUSÃO) -->
               {activeTab === 'transactions' && (
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                   <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                    <h2 className="font-bold text-slate-800 text-base">Todos os Lançamentos ({filteredTransactions.length})</h2>
-                    <button onClick={() => setShowModal(true)} className="bg-brand-600 text-white text-xs px-3 py-1.5 rounded-xl font-bold">+ Novo Lançamento</button>
+                    <h2 className="font-bold text-slate-800 text-base">Todos os Lancamentos ({filteredTransactions.length})</h2>
+                    <button onClick={() => setShowModal(true)} className="bg-brand-600 text-white text-xs px-3 py-1.5 rounded-xl font-bold">+ Novo Lancamento</button>
                   </div>
 
                   {filteredTransactions.length === 0 ? (
-                    <div className="py-12 text-center text-slate-400 text-sm">Sem movimentações para exibir.</div>
+                    <div className="py-12 text-center text-slate-400 text-sm">Sem movimentacoes para exibir.</div>
                   ) : (
                     <div className="divide-y divide-slate-100">
                       {filteredTransactions.map((t) => (
@@ -377,7 +368,6 @@
                 </div>
               )}
 
-              <!-- ABA 3: RELATÓRIOS & RESUMO -->
               {activeTab === 'reports' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
@@ -385,7 +375,7 @@
                     <div className="flex flex-col gap-3">
                       {people.map(p => {
                         const pTotal = data.transactions
-                          .filter(t => (t.person || 'Bernadete (Mãe)') === p)
+                          .filter(t => (t.person || 'Bernadete (Mae)') === p)
                           .reduce((acc, t) => t.type === 'income' ? acc + Number(t.amount) : acc - Number(t.amount), 0);
                         return (
                           <div key={p} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
@@ -400,20 +390,19 @@
                   </div>
 
                   <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <h2 className="font-bold text-slate-800 text-sm mb-4">Balanço Geral da Família</h2>
+                    <h2 className="font-bold text-slate-800 text-sm mb-4">Balanco Geral da Familia</h2>
                     <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl mb-3">
                       <p className="text-xs font-bold text-emerald-800">Total Entradas</p>
                       <p className="text-xl font-extrabold text-emerald-600">{formatMoney(data.summary.totalReceitas)}</p>
                     </div>
                     <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl">
-                      <p className="text-xs font-bold text-rose-800">Total Saídas</p>
+                      <p className="text-xs font-bold text-rose-800">Total Saidas</p>
                       <p className="text-xl font-extrabold text-rose-600">{formatMoney(data.summary.totalDespesas)}</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <!-- ABA 4: CONTAS MANUAIS -->
               {activeTab === 'accounts' && (
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                   <h2 className="font-bold text-slate-800 text-base mb-4">Gerenciar Contas Manuais</h2>
@@ -421,7 +410,7 @@
                   <form onSubmit={handleAddAccount} className="flex gap-2 mb-6 max-w-md">
                     <input 
                       type="text" 
-                      placeholder="Nome da Conta (ex: Itaú, Caixa)"
+                      placeholder="Nome da Conta (ex: Itau, Caixa)"
                       value={newAccountName}
                       onChange={(e) => setNewAccountName(e.target.value)}
                       className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
@@ -447,15 +436,14 @@
 
             </main>
 
-            <!-- Bottom Navigation Bar (Mobile) -->
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-2 flex justify-between items-center z-40">
               <button onClick={() => setActiveTab('overview')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'overview' ? 'text-brand-600 font-bold' : 'text-slate-400'}`}>
                 <span className="text-lg">🏠</span>
-                <span className="text-[10px]">Início</span>
+                <span className="text-[10px]">Inicio</span>
               </button>
               <button onClick={() => setActiveTab('transactions')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'transactions' ? 'text-brand-600 font-bold' : 'text-slate-400'}`}>
                 <span className="text-lg">📋</span>
-                <span className="text-[10px]">Lançamentos</span>
+                <span className="text-[10px]">Lancamentos</span>
               </button>
               <button 
                 onClick={() => setShowModal(true)}
@@ -465,7 +453,7 @@
               </button>
               <button onClick={() => setActiveTab('reports')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'reports' ? 'text-brand-600 font-bold' : 'text-slate-400'}`}>
                 <span className="text-lg">📊</span>
-                <span className="text-[10px]">Relatórios</span>
+                <span className="text-[10px]">Relatorios</span>
               </button>
               <button onClick={() => setActiveTab('accounts')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'accounts' ? 'text-brand-600 font-bold' : 'text-slate-400'}`}>
                 <span className="text-lg">💳</span>
@@ -473,21 +461,20 @@
               </button>
             </div>
 
-            <!-- MODAL: NOVO LANÇAMENTO -->
             {showModal && (
               <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                 <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-xl border border-slate-100">
                   <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-                    <h3 className="font-bold text-slate-800 text-sm">Novo Lançamento</h3>
+                    <h3 className="font-bold text-slate-800 text-sm">Novo Lancamento</h3>
                     <button onClick={() => setShowModal(false)} className="text-slate-400 text-lg font-bold">✕</button>
                   </div>
 
                   <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 mb-1">Descrição</label>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Descricao</label>
                       <input
                         type="text"
-                        placeholder="Ex: Mercado, Luz, Salário"
+                        placeholder="Ex: Mercado, Luz, Salario"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
@@ -509,7 +496,7 @@
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1">Pessoa Responsável</label>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1">Pessoa Responsavel</label>
                         <select 
                           value={person} 
                           onChange={(e) => setPerson(e.target.value)}
@@ -557,14 +544,13 @@
                       disabled={loading}
                       className="bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-200 transition"
                     >
-                      {loading ? 'Salvando...' : 'Confirmar Lançamento'}
+                      {loading ? 'Salvando...' : 'Confirmar Lancamento'}
                     </button>
                   </form>
                 </div>
               </div>
             )}
 
-            <!-- MODAL: NOVA PESSOA -->
             {showPersonModal && (
               <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                 <div className="bg-white w-full max-w-sm rounded-2xl p-5 shadow-xl border border-slate-100">
