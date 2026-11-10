@@ -7,6 +7,10 @@ import Installments from './pages/Installments';
 import Investments from './pages/Investments';
 import Debts from './pages/Debts';
 import Goals from './pages/Goals';
+import Charts from './pages/Charts';
+import Forecast from './pages/Forecast';
+import AIAssistant from './pages/AIAssistant';
+import Reports from './pages/Reports';
 import ExportExcel from './pages/ExportExcel';
 
 export default function App() {
@@ -306,9 +310,13 @@ export default function App() {
           {activeSection === 'investments' && <Investments />}
           {activeSection === 'debts' && <Debts />}
           {activeSection === 'goals' && <Goals />}
+          {activeSection === 'charts' && <Charts />}
+          {activeSection === 'forecast' && <Forecast />}
+          {activeSection === 'ai' && <AIAssistant />}
+          {activeSection === 'reports' && <Reports />}
           {activeSection === 'export' && <ExportExcel />}
 
-          {!['dashboard', 'categories', 'cards', 'installments', 'investments', 'debts', 'goals', 'export'].includes(activeSection) && (
+          {!['dashboard', 'categories', 'cards', 'installments', 'investments', 'debts', 'goals', 'charts', 'forecast', 'ai', 'reports', 'export'].includes(activeSection) && (
             <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-16">
               <span className="text-4xl block mb-3">🛠️</span>
               <h3 className="font-bold text-slate-800 text-base mb-1">Módulo {activeSection}</h3>
