@@ -108,7 +108,6 @@ const initDb = async () => {
       )
     `);
 
-    // MIGRAÇÃO COMPLETA: Adiciona todas as colunas ausentes na tabela transactions existente
     await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS account_id INT`).catch(() => {});
     await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS card_id INT`).catch(() => {});
     await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Dinheiro'`).catch(() => {});
@@ -116,9 +115,6 @@ const initDb = async () => {
     await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS installment_current INT DEFAULT 1`).catch(() => {});
     await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS installment_total INT DEFAULT 1`).catch(() => {});
     await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS due_date TIMESTAMP`).catch(() => {});
-    
-    await pool.query(`ALTER TABLE transactions ALTER COLUMN account_id DROP NOT NULL`).catch(() => {});
-    await pool.query(`ALTER TABLE transactions ALTER COLUMN card_id DROP NOT NULL`).catch(() => {});
 
     console.log('Base de dados SaaS estruturada e migrações aplicadas com sucesso.');
   } catch (err) {
@@ -171,27 +167,13 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Pessoas Responsáveis
+// Pessoas
 app.get('/api/people', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM people WHERE user_id = $1 ORDER BY id ASC', [req.user.id]);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar pessoas.' });
-  }
-});
-
-app.post('/api/people', authenticateToken, async (req, res) => {
-  const { name, nickname, observation } = req.body;
-  if (!name) return res.status(400).json({ error: 'Nome obrigatório.' });
-  try {
-    const result = await pool.query(
-      'INSERT INTO people (user_id, name, nickname, observation) VALUES ($1, $2, $3, $4) RETURNING *',
-      [req.user.id, name.trim(), nickname || name.trim(), observation || '']
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao cadastrar pessoa.' });
   }
 });
 
@@ -209,30 +191,6 @@ app.get('/api/bank-accounts', authenticateToken, async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar contas bancárias.' });
-  }
-});
-
-app.post('/api/bank-accounts', authenticateToken, async (req, res) => {
-  const { bank_name, account_type, balance, person_id, color_theme } = req.body;
-  if (!bank_name || !person_id) return res.status(400).json({ error: 'Banco e responsável são obrigatórios.' });
-
-  try {
-    const result = await pool.query(
-      'INSERT INTO bank_accounts (user_id, bank_name, account_type, balance, person_id, color_theme) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [req.user.id, bank_name, account_type || 'Conta Corrente', parseFloat(balance) || 0, person_id, color_theme || 'from-purple-700 to-purple-950']
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao cadastrar conta bancária.' });
-  }
-});
-
-app.delete('/api/bank-accounts/:id', authenticateToken, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM bank_accounts WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao apagar conta bancária.' });
   }
 });
 
@@ -254,59 +212,37 @@ app.get('/api/credit-cards', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/credit-cards', authenticateToken, async (req, res) => {
-  const { account_id, card_name, bank_emitter, holder_name, brand, last_digits, card_limit, closing_day, due_day, color_bg, dark_mode } = req.body;
-  
-  if (!card_name || !card_limit) {
-    return res.status(400).json({ error: 'Preencha os campos obrigatórios do cartão.' });
-  }
-
-  try {
-    const result = await pool.query(
-      `INSERT INTO credit_cards (user_id, account_id, card_name, bank_emitter, holder_name, brand, last_digits, card_limit, closing_day, due_day, color_bg, dark_mode)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-      [
-        req.user.id, 
-        account_id ? parseInt(account_id, 10) : null, 
-        card_name, 
-        bank_emitter || 'Banco', 
-        holder_name || 'Titular', 
-        brand || 'Mastercard', 
-        last_digits || '0000', 
-        parseFloat(card_limit), 
-        parseInt(closing_day, 10) || 5, 
-        parseInt(due_day, 10) || 10, 
-        color_bg || 'from-purple-700 to-purple-950', 
-        Boolean(dark_mode)
-      ]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Erro detalhado ao gravar cartão:', err);
-    res.status(500).json({ error: 'Erro ao cadastrar cartão de crédito: ' + err.message });
-  }
-});
-
-app.delete('/api/credit-cards/:id', authenticateToken, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM credit_cards WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao apagar cartão.' });
-  }
-});
-
-// Transações
+// Transações com Resumo Separado (Débito vs Crédito)
 app.get('/api/transactions', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM transactions WHERE user_id = $1 ORDER BY date DESC', [req.user.id]);
     const transactions = result.rows.map(t => ({ ...t, amount: parseFloat(t.amount) }));
 
-    const totalReceitas = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-    const totalDespesas = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-    const saldoFinal = totalReceitas - totalDespesas;
+    const totalReceitas = transactions
+      .filter(t => t.type === 'income')
+      .reduce((acc, t) => acc + t.amount, 0);
 
-    res.json({ summary: { totalReceitas, totalDespesas, saldoFinal }, transactions });
+    // Despesas à Vista (Débito, PIX, Dinheiro, etc.) -> Descontam do Saldo
+    const totalDespesasDebito = transactions
+      .filter(t => t.type === 'expense' && t.payment_method !== 'Cartão de Crédito')
+      .reduce((acc, t) => acc + t.amount, 0);
+
+    // Despesas no Cartão de Crédito -> Comprometem Limite/Fatura
+    const totalDespesasCredito = transactions
+      .filter(t => t.type === 'expense' && t.payment_method === 'Cartão de Crédito')
+      .reduce((acc, t) => acc + t.amount, 0);
+
+    const saldoFinal = totalReceitas - totalDespesasDebito;
+
+    res.json({
+      summary: {
+        totalReceitas,
+        totalDespesasDebito,
+        totalDespesasCredito,
+        saldoFinal
+      },
+      transactions
+    });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao procurar lançamentos.' });
   }
@@ -355,51 +291,16 @@ app.delete('/api/transactions/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Calendário Eventos
-app.get('/api/calendar-events', authenticateToken, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM calendar_events WHERE user_id = $1 ORDER BY event_date ASC', [req.user.id]);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao buscar eventos do calendário.' });
-  }
-});
-
-app.post('/api/calendar-events', authenticateToken, async (req, res) => {
-  const { title, description, event_type, amount, event_date, status } = req.body;
-  if (!title || !event_date) return res.status(400).json({ error: 'Título e data são obrigatórios.' });
-
-  try {
-    const result = await pool.query(
-      'INSERT INTO calendar_events (user_id, title, description, event_type, amount, event_date, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [req.user.id, title, description || '', event_type || 'financeiro', parseFloat(amount) || 0, event_date, status || 'Pendente']
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao criar evento.' });
-  }
-});
-
-app.delete('/api/calendar-events/:id', authenticateToken, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM calendar_events WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao apagar evento.' });
-  }
-});
-
 // Exportar Excel
 app.get('/api/export/excel', authenticateToken, async (req, res) => {
   try {
-    const transResult = await pool.query('SELECT description, amount, type, category, account, person, status, date FROM transactions WHERE user_id = $1 ORDER BY date DESC', [req.user.id]);
+    const transResult = await pool.query('SELECT description, amount, type, category, account, payment_method, status, date FROM transactions WHERE user_id = $1 ORDER BY date DESC', [req.user.id]);
     const formattedTrans = transResult.rows.map(t => ({
       Descrição: t.description,
       'Valor (R$)': parseFloat(t.amount),
       Tipo: t.type === 'income' ? 'Receita' : 'Despesa',
       Categoria: t.category,
-      Conta: t.account,
-      Pessoa: t.person,
+      Forma: t.payment_method,
       Status: t.status,
       Data: new Date(t.date).toLocaleDateString('pt-BR')
     }));

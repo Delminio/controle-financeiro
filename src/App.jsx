@@ -82,7 +82,12 @@ export default function App() {
   const [cardsList, setCardsList] = useState([]);
   const [accountsList, setAccountsList] = useState([]);
   const [transactions, setTransactions] = useState([]);
-  const [summary, setSummary] = useState({ totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 });
+  const [summary, setSummary] = useState({ 
+    totalReceitas: 0, 
+    totalDespesasDebito: 0, 
+    totalDespesasCredito: 0, 
+    saldoFinal: 0 
+  });
 
   const loadAppData = async () => {
     if (!token) return;
@@ -96,7 +101,7 @@ export default function App() {
       if (transRes && transRes.ok) {
         const json = await transRes.json();
         setTransactions(json.transactions || []);
-        setSummary(json.summary || { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 });
+        setSummary(json.summary || { totalReceitas: 0, totalDespesasDebito: 0, totalDespesasCredito: 0, saldoFinal: 0 });
       }
       if (cardRes && cardRes.ok) {
         const cardsData = await cardRes.json();
@@ -380,18 +385,27 @@ export default function App() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* DASHBOARD COM 4 CARDS: SEPARANDO CRÉDITO E DÉBITO */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Total de Receitas</span>
                 <span className="text-2xl font-black text-emerald-600">{formatMoney(summary.totalReceitas)}</span>
               </div>
+              
               <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Total de Despesas</span>
-                <span className="text-2xl font-black text-rose-600">{formatMoney(summary.totalDespesas)}</span>
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Despesas à Vista (Débito/PIX)</span>
+                <span className="text-2xl font-black text-rose-600">{formatMoney(summary.totalDespesasDebito)}</span>
               </div>
+
               <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Saldo Consolidado</span>
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Saldo em Conta (Débito)</span>
                 <span className={`text-2xl font-black ${summary.saldoFinal >= 0 ? 'text-slate-900' : 'text-rose-600'}`}>{formatMoney(summary.saldoFinal)}</span>
+              </div>
+
+              <div className="bg-purple-50/70 p-6 rounded-3xl border border-purple-200/80 shadow-sm">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-purple-700 block mb-2">Fatura Cartão (Crédito)</span>
+                <span className="text-2xl font-black text-purple-700">{formatMoney(summary.totalDespesasCredito)}</span>
+                <p className="text-[10px] text-purple-500 font-bold mt-1">NÃO abata do seu saldo em conta</p>
               </div>
             </div>
 
@@ -407,7 +421,7 @@ export default function App() {
                         <p className="font-bold text-slate-800">{t.description}</p>
                         <p className="text-[10px] text-slate-400">{t.category} • {t.payment_method || 'Dinheiro'}</p>
                       </div>
-                      <span className={`font-black ${t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <span className={`font-black ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
                         {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
                       </span>
                     </div>
@@ -447,9 +461,9 @@ export default function App() {
                     <div key={t.id} className="py-4 flex items-center justify-between text-xs">
                       <div>
                         <p className="font-black text-slate-800 text-sm">{t.description}</p>
-                        <p className="text-[11px] text-slate-400">{t.category} • {t.account} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-[11px] text-slate-400">{t.category} • {t.payment_method || 'Dinheiro'} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
                       </div>
-                      <span className={`font-black text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <span className={`font-black text-sm ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
                         {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
                       </span>
                     </div>
