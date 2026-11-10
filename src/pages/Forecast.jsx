@@ -1,42 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { fetchWithAuth } from '../services/api';
 
 export default function Forecast() {
-  const formatMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+  const [summary, setSummary] = useState({ totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const periods = [
-    { label: 'Próximos 7 dias', expectedIncome: 0, expectedExpense: 450, forecastBalance: 500 },
-    { label: 'Próximos 15 dias', expectedIncome: 1500, expectedExpense: 860, forecastBalance: 1140 },
-    { label: 'Próximos 30 dias', expectedIncome: 4500, expectedExpense: 3200, forecastBalance: 2250 },
-    { label: 'Próximos 90 dias', expectedIncome: 13500, expectedExpense: 9600, forecastBalance: 4850 },
-  ];
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const res = await fetchWithAuth('/transactions');
+        if (res.ok) {
+          const json = await res.json();
+          setSummary(json.summary || { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 });
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const formatMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <h2 className="text-base font-bold text-slate-800">Previsão Financeira e Fluxo de Caixa Futuro</h2>
-        <p className="text-xs text-slate-500">Estimativas calculadas com base em contas fixas, parcelamentos ativos e recebimentos previstos</p>
+      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+        <h2 className="text-xl font-black text-slate-900">Previsão Financeira</h2>
+        <p className="text-xs font-medium text-slate-500 mt-0.5">Projeção de saldo futuro calculada a partir dos seus lançamentos reais</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {periods.map(p => (
-          <div key={p.label} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block mb-2">{p.label}</span>
-            <div className="space-y-2 my-2">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">Entradas Previstas:</span>
-                <span className="font-bold text-emerald-600">{formatMoney(p.expectedIncome)}</span>
-              </div>
-              <div className="flex justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">Saídas Previstas:</span>
-                <span className="font-bold text-rose-600">{formatMoney(p.expectedExpense)}</span>
-              </div>
-            </div>
-            <div className="pt-3 border-t border-slate-100 flex justify-between items-center mt-2">
-              <span className="text-[11px] font-bold text-slate-700">Saldo Estimado:</span>
-              <span className="text-sm font-black text-slate-900">{formatMoney(p.forecastBalance)}</span>
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Entradas Previstas</span>
+          <span className="text-2xl font-black text-emerald-600">{formatMoney(summary.totalReceitas)}</span>
+        </div>
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Saídas Previstas</span>
+          <span className="text-2xl font-black text-rose-600">{formatMoney(summary.totalDespesas)}</span>
+        </div>
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Saldo Projetado</span>
+          <span className={`text-2xl font-black ${summary.saldoFinal >= 0 ? 'text-slate-900' : 'text-rose-600'}`}>
+            {formatMoney(summary.saldoFinal)}
+          </span>
+        </div>
       </div>
     </div>
   );

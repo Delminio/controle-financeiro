@@ -1,115 +1,95 @@
 import React, { useState } from 'react';
 
 export default function Debts() {
-  const [debts, setDebts] = useState([
-    { id: 1, personOrInstitution: 'Irmão (Carlos)', type: 'emprestei', totalAmount: 500, paidAmount: 200 },
-    { id: 2, personOrInstitution: 'Banco Itaú (Consignado)', type: 'peguei', totalAmount: 4000, paidAmount: 1500 }
-  ]);
-
+  const [debts, setDebts] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [personOrInstitution, setPersonOrInstitution] = useState('');
-  const [type, setType] = useState('emprestei');
-  const [totalAmount, setTotalAmount] = useState('');
+  const [bank, setBank] = useState('');
+  const [amount, setAmount] = useState('');
+  const [installments, setInstallments] = useState('');
 
   const formatMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
-  const handleAddDebt = (e) => {
+  const handleAdd = (e) => {
     e.preventDefault();
-    if (!personOrInstitution || !totalAmount) return;
-
+    if (!bank || !amount) return;
     setDebts([...debts, {
       id: Date.now(),
-      personOrInstitution,
-      type,
-      totalAmount: parseFloat(totalAmount),
-      paidAmount: 0
+      bank,
+      amount: parseFloat(amount),
+      installments: parseInt(installments, 10) || 1
     }]);
-
-    setPersonOrInstitution('');
-    setTotalAmount('');
+    setBank('');
+    setAmount('');
+    setInstallments('');
     setShowModal(false);
   };
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex items-center justify-between">
         <div>
-          <h2 className="text-base font-bold text-slate-800">Empréstimos e Dívidas</h2>
-          <p className="text-xs text-slate-500">Controle de valores a receber e compromissos tomados</p>
+          <h2 className="text-xl font-black text-slate-900">Empréstimos e Dívidas</h2>
+          <p className="text-xs font-medium text-slate-500 mt-0.5">Controle de contratos financeiros e financiamentos reais</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="bg-emerald-600 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md">
-          + Registar Empréstimo/Dívida
+        <button onClick={() => setShowModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-md cursor-pointer">
+          + Novo Empréstimo
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {debts.map(d => {
-          const remaining = d.totalAmount - d.paidAmount;
-          const isLent = d.type === 'emprestei';
-
-          return (
-            <div key={d.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      {debts.length === 0 ? (
+        <div className="bg-white p-12 rounded-3xl border border-slate-200/80 text-center shadow-sm">
+          <p className="text-xs text-slate-400 font-semibold mb-2">Nenhum empréstimo cadastrado.</p>
+          <p className="text-[11px] text-slate-400">Clique em "+ Novo Empréstimo" para registrar um contrato real.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {debts.map(d => (
+            <div key={d.id} className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
               <div>
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-extrabold text-slate-800 text-sm">{d.personOrInstitution}</h3>
-                  <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg ${isLent ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
-                    {isLent ? 'Dinheiro que emprestei' : 'Dívida que assumi'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 my-2 p-3 bg-slate-50 rounded-xl">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Total</span>
-                    <span className="text-xs font-bold text-slate-700">{formatMoney(d.totalAmount)}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Em Aberto</span>
-                    <span className={`text-xs font-extrabold ${isLent ? 'text-emerald-600' : 'text-rose-600'}`}>
-                      {formatMoney(remaining)}
-                    </span>
-                  </div>
-                </div>
+                <h4 className="text-xs font-extrabold text-slate-800 mb-1">{d.bank}</h4>
+                <p className="text-xs font-semibold text-slate-600">Valor: {formatMoney(d.amount)} • {d.installments}x parcelas</p>
               </div>
+              <button onClick={() => setDebts(debts.filter(item => item.id !== d.id))} className="mt-4 text-xs font-bold text-rose-500 hover:underline cursor-pointer w-fit">Excluir</button>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-xl border border-slate-100">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-              <h3 className="font-bold text-slate-800 text-sm">Registar Empréstimo / Dívida</h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 font-bold">✕</button>
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
+              <h3 className="font-extrabold text-slate-800 text-sm">Cadastrar Empréstimo</h3>
+              <button onClick={() => setShowModal(false)} className="text-slate-400 text-lg font-bold cursor-pointer">✕</button>
             </div>
-            <form onSubmit={handleAddDebt} className="flex flex-col gap-3">
+            <form onSubmit={handleAdd} className="flex flex-col gap-4">
               <input
                 type="text"
-                placeholder="Pessoa ou Instituição"
-                value={personOrInstitution}
-                onChange={(e) => setPersonOrInstitution(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium"
+                placeholder="Instituição Financeira (ex: Caixa, Itaú)"
+                value={bank}
+                onChange={(e) => setBank(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-medium"
                 required
               />
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium"
-              >
-                <option value="emprestei">Emprestei dinheiro a alguém</option>
-                <option value="peguei">Peguei emprestado / Dívida</option>
-              </select>
               <input
                 type="number"
                 step="0.01"
-                placeholder="Valor Total (R$)"
-                value={totalAmount}
-                onChange={(e) => setTotalAmount(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium"
+                placeholder="Valor Contratado (R$)"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-medium"
                 required
               />
-              <button type="submit" className="bg-emerald-600 text-white font-bold text-xs py-2.5 rounded-xl mt-2">
-                Salvar Registo
+              <input
+                type="number"
+                placeholder="Quantidade de Parcelas"
+                value={installments}
+                onChange={(e) => setInstallments(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-medium"
+                required
+              />
+              <button type="submit" className="bg-emerald-600 text-white font-extrabold py-3 rounded-2xl text-xs cursor-pointer shadow-md">
+                Salvar Empréstimo
               </button>
             </form>
           </div>

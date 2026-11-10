@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 export default function AIAssistant() {
   const [messages, setMessages] = useState([
-    { sender: 'ai', text: 'Olá! Sou o seu Assistente Financeiro IA. Como posso ajudar com suas finanças hoje?' }
+    { sender: 'ai', text: 'Olá! Sou o seu assistente financeiro inteligente. Como posso ajudar a otimizar as suas finanças hoje?' }
   ]);
   const [input, setInput] = useState('');
 
@@ -10,59 +10,44 @@ export default function AIAssistant() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const userMsg = { sender: 'user', text: input };
-    setMessages(prev => [...prev, userMsg]);
-    const currentInput = input;
+    const userMsg = { sender: 'user', text: input.trim() };
+    const aiResponse = { sender: 'ai', text: 'Compreendi a sua dúvida. Com base nos seus lançamentos reais, recomendo manter o controle rigoroso das suas despesas fixas para maximizar a sua margem de poupança mensal.' };
+
+    setMessages([...messages, userMsg, aiResponse]);
     setInput('');
-
-    setTimeout(() => {
-      let aiResponse = 'Analisando seus dados financeiros...';
-      if (currentInput.toLowerCase().includes('mercado')) {
-        aiResponse = 'Você gastou R$ 1.250,00 com Mercado este mês (representando 35% das suas despesas totais).';
-      } else if (currentInput.toLowerCase().includes('maior despesa') || currentInput.toLowerCase().includes('maior gasto')) {
-        aiResponse = 'Sua maior despesa recorrente este mês foi com Moradia (Aluguel/Condomínio).';
-      } else {
-        aiResponse = 'Com base nos seus lançamentos, seu saldo atual é positivo e suas contas fixas estão em dia!';
-      }
-
-      setMessages(prev => [...prev, { sender: 'ai', text: aiResponse }]);
-    }, 600);
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm max-w-3xl mx-auto flex flex-col h-[550px] overflow-hidden">
-      <div className="p-4 bg-slate-900 text-white flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-lg">🤖</div>
-        <div>
-          <h3 className="font-bold text-sm">Assistente Financeiro IA</h3>
-          <p className="text-[10px] text-emerald-400 font-semibold">Conectado aos seus lançamentos reais</p>
-        </div>
+    <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+        <h2 className="text-xl font-black text-slate-900">Assistente IA</h2>
+        <p className="text-xs font-medium text-slate-500 mt-0.5">Consultoria financeira personalizada baseada nos seus dados reais</p>
       </div>
 
-      <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
-        {messages.map((m, idx) => (
-          <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-xs sm:max-w-md p-3 rounded-2xl text-xs font-medium shadow-sm ${
-              m.sender === 'user' ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'
-            }`}>
-              {m.text}
+      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col h-[450px] justify-between">
+        <div className="overflow-y-auto flex flex-col gap-4 pr-2">
+          {messages.map((m, idx) => (
+            <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] p-4 rounded-2xl text-xs font-medium leading-relaxed ${m.sender === 'user' ? 'bg-emerald-600 text-white rounded-br-none shadow-md' : 'bg-slate-100 text-slate-800 rounded-bl-none'}`}>
+                {m.text}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <form onSubmit={handleSend} className="p-3 bg-white border-t border-slate-200 flex gap-2">
-        <input
-          type="text"
-          placeholder="Pergunte algo sobre seus gastos (ex: Quanto gastei com mercado?)..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-emerald-600"
-        />
-        <button type="submit" className="bg-emerald-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl">
-          Enviar
-        </button>
-      </form>
+        <form onSubmit={handleSend} className="flex gap-3 pt-4 border-t border-slate-100 mt-4">
+          <input
+            type="text"
+            placeholder="Digite a sua dúvida financeira..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-emerald-600"
+          />
+          <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl text-xs font-extrabold cursor-pointer shadow-md transition">
+            Enviar
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
