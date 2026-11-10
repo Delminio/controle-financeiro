@@ -1,8 +1,7 @@
 {
   "name": "controle-financeiro",
-  "version": "2.1.0",
-  "description": "API e Frontend do Controle Financeiro",
-  "main": "server.js",
+  "version": "2.2.0",
+  "private": true,
   "scripts": {
     "start": "node server.js",
     "dev": "vite",
@@ -14,10 +13,10 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "lucide-react": "^0.344.0",
     "pg": "^8.11.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "recharts": "^2.12.2",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

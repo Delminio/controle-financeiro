@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from './services/api';
 import Sidebar from './components/Sidebar';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 import Categories from './pages/Categories';
 import Accounts from './pages/Accounts';
@@ -20,6 +21,19 @@ import ExportExcel from './pages/ExportExcel';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 
+const EXPENSE_CATEGORIES = [
+  'Aluguel', 'Condomínio', 'Água', 'Energia elétrica', 'Gás', 'Internet', 'Mercado', 'Padaria',
+  'Restaurante', 'Delivery', 'Combustível', 'Uber', 'Manutenção Veículo', 'Cartão de Crédito',
+  'Farmácia', 'Plano de Saúde', 'Academia', 'Cursos', 'Cinema', 'Streaming', 'Roupas', 'Outros'
+];
+
+const INCOME_CATEGORIES = [
+  'Salário', 'Décimo Terceiro', 'Férias', 'Bônus', 'Freelance', 'Venda de Produtos',
+  'Renda de Aluguel', 'Dividendos', 'Rendimentos', 'Cashback', 'Outros Recebimentos'
+];
+
+const PIE_COLORS = ['#10b981', '#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'];
+
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || 'null'));
@@ -35,12 +49,14 @@ export default function App() {
   const [data, setData] = useState({ summary: { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 }, transactions: [] });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Form de Lançamento
   const [showModal, setShowModal] = useState(false);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('expense');
+  const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
   const [account, setAccount] = useState('Nubank');
-  const [person, setPerson] = useState('Bernadete');
+  const [person, setPerson] = useState('Principal');
   const [submitting, setSubmitting] = useState(false);
 
   const API_URL = 'https://controle-financeiro-x8ah.onrender.com/api';
@@ -100,6 +116,10 @@ export default function App() {
     if (token) fetchData();
   }, [token]);
 
+  useEffect(() => {
+    setCategory(type === 'expense' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0]);
+  }, [type]);
+
   const handleAddTransaction = async (e) => {
     e.preventDefault();
     if (!description || !amount) return;
@@ -108,7 +128,7 @@ export default function App() {
     try {
       const res = await fetchWithAuth('/transactions', {
         method: 'POST',
-        body: JSON.stringify({ description, amount: parseFloat(amount), type, account, person })
+        body: JSON.stringify({ description, amount: parseFloat(amount), type, category, account, person })
       });
 
       if (res.ok) {
@@ -125,7 +145,7 @@ export default function App() {
   };
 
   const handleDeleteTransaction = async (id) => {
-    if (!confirm('Deseja apagar este lançamento?')) return;
+    if (!confirm('Tem certeza que deseja apagar este lançamento?')) return;
     try {
       await fetchWithAuth('/transactions/' + id, { method: 'DELETE' });
       fetchData();
@@ -141,20 +161,31 @@ export default function App() {
 
   const formatMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
+  // Agrupamento para Gráfico de Pizza
+  const getPieData = () => {
+    const expenses = data.transactions.filter(t => t.type === 'expense');
+    const grouped = expenses.reduce((acc, t) => {
+      acc[t.category] = (acc[t.category] || 0) + parseFloat(t.amount);
+      return acc;
+    }, {});
+
+    return Object.keys(grouped).map(cat => ({ name: cat, value: grouped[cat] }));
+  };
+
   if (!token) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
         <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl border border-slate-100">
           <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-extrabold text-2xl mx-auto mb-3 shadow-lg shadow-emerald-200">
+            <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-3xl mx-auto mb-4 shadow-xl shadow-emerald-200">
               O
             </div>
-            <h1 className="text-2xl font-bold text-slate-800">Organize Financeiro</h1>
-            <p className="text-xs text-slate-500 mt-1">Plataforma de Gestão Financeira Pessoal</p>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Organize Financeiro</h1>
+            <p className="text-xs font-semibold text-slate-500 mt-1">Plataforma Profissional de Gestão Financeira Pessoal</p>
           </div>
 
           {authError && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-xs font-bold mb-4">
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3.5 rounded-2xl text-xs font-bold mb-5">
               {authError}
             </div>
           )}
@@ -162,38 +193,38 @@ export default function App() {
           <form onSubmit={handleAuth} className="flex flex-col gap-4">
             {authMode === 'register' && (
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Nome Completo</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Nome Completo</label>
                 <input 
                   type="text" 
                   placeholder="Seu nome"
                   value={authName}
                   onChange={(e) => setAuthName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-semibold focus:outline-none focus:border-emerald-600 transition"
                   required
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">E-mail</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">E-mail</label>
               <input 
                 type="email" 
-                placeholder="bernadete@financeiro.com"
+                placeholder="seu@email.com"
                 value={authEmail}
                 onChange={(e) => setAuthEmail(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-semibold focus:outline-none focus:border-emerald-600 transition"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">Senha</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Senha</label>
               <input 
                 type="password" 
                 placeholder="••••••••"
                 value={authPassword}
                 onChange={(e) => setAuthPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-semibold focus:outline-none focus:border-emerald-600 transition"
                 required
               />
             </div>
@@ -201,16 +232,16 @@ export default function App() {
             <button 
               type="submit" 
               disabled={authLoading}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-emerald-200 transition mt-2"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-lg shadow-emerald-200 transition mt-2 cursor-pointer"
             >
-              {authLoading ? 'Processando...' : (authMode === 'login' ? 'Entrar no Sistema' : 'Criar Minha Conta')}
+              {authLoading ? 'Carregando...' : (authMode === 'login' ? 'Entrar no Sistema' : 'Criar Minha Conta')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <button 
               onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setAuthError(''); }}
-              className="text-xs font-bold text-emerald-600 hover:underline"
+              className="text-xs font-bold text-emerald-600 hover:underline cursor-pointer"
             >
               {authMode === 'login' ? 'Não tem uma conta? Cadastre-se' : 'Já possui conta? Faça Login'}
             </button>
@@ -220,8 +251,10 @@ export default function App() {
     );
   }
 
+  const pieData = getPieData();
+
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="flex min-h-screen bg-slate-100/70">
       <Sidebar 
         activeSection={activeSection} 
         setActiveSection={setActiveSection} 
@@ -232,101 +265,143 @@ export default function App() {
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-600 font-bold text-xl">☰</button>
-            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+        <header className="bg-white border-b border-slate-200/80 px-8 py-5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-700 font-bold text-2xl">☰</button>
+            <h2 className="text-base font-extrabold text-slate-800 uppercase tracking-wide">
               {activeSection}
             </h2>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button 
               onClick={handleExportExcel}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl border border-slate-200 transition"
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-2xl border border-slate-200 transition cursor-pointer"
             >
               📥 Exportar Excel
             </button>
             <button 
               onClick={() => setShowModal(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md shadow-emerald-100 transition"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-lg shadow-emerald-100 transition cursor-pointer"
             >
               + Novo Lançamento
             </button>
           </div>
         </header>
 
-        <main className="p-6 max-w-7xl w-full mx-auto">
+        <main className="p-8 max-w-7xl w-full mx-auto">
           {activeSection === 'dashboard' && (
-            <div className="flex flex-col gap-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Receitas do Mês</span>
-                  <span className="text-2xl font-extrabold text-emerald-600">{formatMoney(data.summary.totalReceitas)}</span>
+            <div className="flex flex-col gap-8">
+              {/* Cards Principais */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Receitas do Mês</span>
+                  <span className="text-3xl font-black text-emerald-600 tracking-tight">{formatMoney(data.summary.totalReceitas)}</span>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Despesas do Mês</span>
-                  <span className="text-2xl font-extrabold text-rose-600">{formatMoney(data.summary.totalDespesas)}</span>
+                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Despesas do Mês</span>
+                  <span className="text-3xl font-black text-rose-600 tracking-tight">{formatMoney(data.summary.totalDespesas)}</span>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Saldo Atual</span>
-                  <span className={'text-2xl font-extrabold ' + (data.summary.saldoFinal >= 0 ? 'text-slate-900' : 'text-rose-600')}>
+                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Saldo Geral</span>
+                  <span className={`text-3xl font-black tracking-tight ${data.summary.saldoFinal >= 0 ? 'text-slate-900' : 'text-rose-600'}`}>
                     {formatMoney(data.summary.saldoFinal)}
                   </span>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-800 text-sm">Últimas Movimentações</h3>
-                  <span className="text-xs text-slate-400">{data.transactions.length} lançamentos</span>
+              {/* Seção Visual de Gráficos e Distribuição */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Gráfico de Pizza - Despesas por Categoria */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+                  <h3 className="font-extrabold text-slate-800 text-sm mb-4 pb-3 border-b border-slate-100">Gráfico de Pizza: Despesas por Categoria</h3>
+                  {pieData.length === 0 ? (
+                    <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-xs font-medium">
+                      <span>Nenhuma despesa cadastrada para exibir no gráfico.</span>
+                    </div>
+                  ) : (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={50}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => formatMoney(value)} />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </div>
 
-                {data.transactions.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-8 text-center">Nenhuma movimentação registrada.</p>
-                ) : (
-                  <div className="divide-y divide-slate-100">
-                    {data.transactions.map(t => (
-                      <div key={t.id} className="py-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={'w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ' + (t.type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700')}>
-                            {t.type === 'income' ? '+' : '-'}
+                {/* Resumo de Movimentações Recentes */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                      <h3 className="font-extrabold text-slate-800 text-sm">Últimas Movimentações</h3>
+                      <span className="text-xs font-bold text-slate-400">{data.transactions.length} lançamentos</span>
+                    </div>
+
+                    {data.transactions.length === 0 ? (
+                      <p className="text-xs text-slate-400 py-12 text-center font-medium">Nenhum lançamento registrado. Clique em "+ Novo Lançamento" para começar.</p>
+                    ) : (
+                      <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                        {data.transactions.slice(0, 5).map(t => (
+                          <div key={t.id} className="py-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-xs ${t.type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                {t.type === 'income' ? '+' : '-'}
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-800">{t.description}</p>
+                                <p className="text-[10px] text-slate-400 font-medium">{t.category} • {t.account}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className={`text-xs font-extrabold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-800'}`}>
+                                {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                              </span>
+                              <button onClick={() => handleDeleteTransaction(t.id)} className="text-[11px] text-rose-500 font-bold hover:underline cursor-pointer">Apagar</button>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-xs font-bold text-slate-800">{t.description}</p>
-                            <p className="text-[10px] text-slate-400">{t.person} • {t.account}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className={'text-xs font-bold ' + (t.type === 'income' ? 'text-emerald-600' : 'text-slate-700')}>
-                            {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
-                          </span>
-                          <button onClick={() => handleDeleteTransaction(t.id)} className="text-[11px] text-rose-500 font-bold hover:underline">Apagar</button>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           )}
 
           {activeSection === 'transactions' && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-              <h2 className="text-base font-bold text-slate-800 mb-4 pb-3 border-b border-slate-100">Todos os Lançamentos ({data.transactions.length})</h2>
+            <div className="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-sm">
+              <h2 className="text-base font-extrabold text-slate-800 mb-6 pb-3 border-b border-slate-100">Todos os Lançamentos ({data.transactions.length})</h2>
               {data.transactions.length === 0 ? (
-                <p className="text-xs text-slate-400 py-8 text-center">Nenhum lançamento.</p>
+                <p className="text-xs text-slate-400 py-12 text-center font-medium">Nenhum lançamento cadastrado.</p>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {data.transactions.map(t => (
-                    <div key={t.id} className="py-3 flex items-center justify-between">
+                    <div key={t.id} className="py-4 flex items-center justify-between">
                       <div>
                         <p className="text-xs font-bold text-slate-800">{t.description}</p>
-                        <p className="text-[10px] text-slate-400">{t.person} • {t.account} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-[11px] text-slate-400 font-medium">{t.category} • {t.account} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
                       </div>
-                      <span className={'text-xs font-bold ' + (t.type === 'income' ? 'text-emerald-600' : 'text-slate-700')}>
-                        {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
-                      </span>
+                      <div className="flex items-center gap-4">
+                        <span className={`text-xs font-extrabold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-800'}`}>
+                          {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                        </span>
+                        <button onClick={() => handleDeleteTransaction(t.id)} className="text-[11px] text-rose-500 font-bold hover:underline cursor-pointer">Apagar</button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -355,57 +430,88 @@ export default function App() {
         </main>
       </div>
 
+      {/* Modal de Novo Lançamento com Categorias Filtradas */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-xl border border-slate-100">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-              <h3 className="font-bold text-slate-800 text-sm">Novo Lançamento</h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 text-lg font-bold">✕</button>
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
+              <h3 className="font-extrabold text-slate-800 text-sm">Novo Lançamento</h3>
+              <button onClick={() => setShowModal(false)} className="text-slate-400 text-lg font-bold cursor-pointer">✕</button>
             </div>
 
-            <form onSubmit={handleAddTransaction} className="flex flex-col gap-3">
+            <form onSubmit={handleAddTransaction} className="flex flex-col gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Descrição</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Descrição</label>
                 <input
                   type="text"
                   placeholder="Ex: Mercado, Luz, Salário"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-emerald-600"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Valor (R$)</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Valor (R$)</label>
                   <input
                     type="number"
                     step="0.01"
                     placeholder="0,00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-emerald-600"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Pessoa Responsável</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Pessoa Responsável</label>
                   <input
                     type="text"
                     value={person}
                     onChange={(e) => setPerson(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-emerald-600"
                   />
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3 my-1">
+                <button
+                  type="button"
+                  onClick={() => setType('expense')}
+                  className={`py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${type === 'expense' ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-slate-100 text-slate-600'}`}
+                >
+                  Despesa (-)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setType('income')}
+                  className={`py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${type === 'income' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' : 'bg-slate-100 text-slate-600'}`}
+                >
+                  Receita (+)
+                </button>
+              </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Conta / Carteira</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Categoria</label>
+                <select 
+                  value={category} 
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                >
+                  {(type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Conta / Carteira</label>
                 <select 
                   value={account} 
                   onChange={(e) => setAccount(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600"
                 >
                   <option value="Nubank">Nubank</option>
                   <option value="Inter">Inter</option>
@@ -413,27 +519,10 @@ export default function App() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 my-1">
-                <button
-                  type="button"
-                  onClick={() => setType('expense')}
-                  className={'py-2 rounded-xl text-xs font-bold transition ' + (type === 'expense' ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-600')}
-                >
-                  Despesa (-)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setType('income')}
-                  className={'py-2 rounded-xl text-xs font-bold transition ' + (type === 'income' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600')}
-                >
-                  Receita (+)
-                </button>
-              </div>
-
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-200 transition"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-2xl font-extrabold text-xs shadow-lg shadow-emerald-200 transition mt-2 cursor-pointer"
               >
                 {submitting ? 'Salvando...' : 'Confirmar Lançamento'}
               </button>
