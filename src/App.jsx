@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from './services/api';
 import Sidebar from './components/Sidebar';
+import Categories from './pages/Categories';
+import CreditCards from './pages/CreditCards';
+import ExportExcel from './pages/ExportExcel';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -45,7 +48,7 @@ export default function App() {
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Erro na autenticacao.');
+      if (!res.ok) throw new Error(json.error || 'Erro na autenticação.');
 
       setToken(json.token);
       setUser(json.user);
@@ -53,7 +56,7 @@ export default function App() {
       localStorage.setItem('user', JSON.stringify(json.user));
     } catch (err) {
       setAuthError(err.message);
-    } finally {
+    } fontally {
       setAuthLoading(false);
     }
   };
@@ -107,7 +110,7 @@ export default function App() {
   };
 
   const handleDeleteTransaction = async (id) => {
-    if (!confirm('Deseja apagar este lancamento?')) return;
+    if (!confirm('Deseja apagar este lançamento?')) return;
     try {
       await fetchWithAuth('/transactions/' + id, { method: 'DELETE' });
       fetchData();
@@ -134,7 +137,7 @@ export default function App() {
               O
             </div>
             <h1 className="text-2xl font-bold text-slate-800">Organize Financeiro</h1>
-            <p className="text-xs text-slate-500 mt-1">Plataforma de Gestao Financeira Pessoal</p>
+            <p className="text-xs text-slate-500 mt-1">Plataforma de Gestão Financeira Pessoal</p>
           </div>
 
           {authError && (
@@ -196,7 +199,7 @@ export default function App() {
               onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setAuthError(''); }}
               className="text-xs font-bold text-emerald-600 hover:underline"
             >
-              {authMode === 'login' ? 'Nao tem uma conta? Cadastre-se' : 'Ja possui conta? Faca Login'}
+              {authMode === 'login' ? 'Não tem uma conta? Cadastre-se' : 'Já possui conta? Faça Login'}
             </button>
           </div>
         </div>
@@ -235,7 +238,7 @@ export default function App() {
               onClick={() => setShowModal(true)}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md shadow-emerald-100 transition"
             >
-              + Novo Lancamento
+              + Novo Lançamento
             </button>
           </div>
         </header>
@@ -245,11 +248,11 @@ export default function App() {
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Receitas do Mes</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Receitas do Mês</span>
                   <span className="text-2xl font-extrabold text-emerald-600">{formatMoney(data.summary.totalReceitas)}</span>
                 </div>
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Despesas do Mes</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Despesas do Mês</span>
                   <span className="text-2xl font-extrabold text-rose-600">{formatMoney(data.summary.totalDespesas)}</span>
                 </div>
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
@@ -262,12 +265,12 @@ export default function App() {
 
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-800 text-sm">Ultimas Movimentacoes</h3>
-                  <span className="text-xs text-slate-400">{data.transactions.length} lancamentos</span>
+                  <h3 className="font-bold text-slate-800 text-sm">Últimas Movimentações</h3>
+                  <span className="text-xs text-slate-400">{data.transactions.length} lançamentos</span>
                 </div>
 
                 {data.transactions.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-8 text-center">Nenhuma movimentacao registrada.</p>
+                  <p className="text-xs text-slate-400 py-8 text-center">Nenhuma movimentação registrada.</p>
                 ) : (
                   <div className="divide-y divide-slate-100">
                     {data.transactions.map(t => (
@@ -295,12 +298,16 @@ export default function App() {
             </div>
           )}
 
-          {activeSection !== 'dashboard' && (
+          {activeSection === 'categories' && <Categories />}
+          {activeSection === 'cards' && <CreditCards />}
+          {activeSection === 'export' && <ExportExcel />}
+
+          {!['dashboard', 'categories', 'cards', 'export'].includes(activeSection) && (
             <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-16">
               <span className="text-4xl block mb-3">🛠️</span>
-              <h3 className="font-bold text-slate-800 text-base mb-1">Modulo {activeSection}</h3>
+              <h3 className="font-bold text-slate-800 text-base mb-1">Módulo {activeSection}</h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Modulo isolado pronto para personalizacao em ficheiro separado.
+                Módulo isolado pronto para personalização em arquivo separado.
               </p>
             </div>
           )}
@@ -311,16 +318,16 @@ export default function App() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-xl border border-slate-100">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-              <h3 className="font-bold text-slate-800 text-sm">Novo Lancamento</h3>
+              <h3 className="font-bold text-slate-800 text-sm">Novo Lançamento</h3>
               <button onClick={() => setShowModal(false)} className="text-slate-400 text-lg font-bold">✕</button>
             </div>
 
             <form onSubmit={handleAddTransaction} className="flex flex-col gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Descricao</label>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">Descrição</label>
                 <input
                   type="text"
-                  placeholder="Ex: Mercado, Luz, Salario"
+                  placeholder="Ex: Mercado, Luz, Salário"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
@@ -342,7 +349,7 @@ export default function App() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Pessoa Responsavel</label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">Pessoa Responsável</label>
                   <input
                     type="text"
                     value={person}
@@ -387,7 +394,7 @@ export default function App() {
                 disabled={submitting}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-200 transition"
               >
-                {submitting ? 'Salvando...' : 'Confirmar Lancamento'}
+                {submitting ? 'Salvando...' : 'Confirmar Lançamento'}
               </button>
             </form>
           </div>
