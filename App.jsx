@@ -6,7 +6,7 @@ export default function FinanceDashboard() {
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('expense');
 
-  const API_URL = 'https://seu-backend.onrender.com/api/transactions';
+  const API_URL = 'https://controle-financeiro-x8ah.onrender.com/api/transactions';
 
   const fetchData = async () => {
     const res = await fetch(API_URL);
