@@ -91,11 +91,6 @@ const initDb = async () => {
         category VARCHAR(100) DEFAULT 'Outros',
         account VARCHAR(50) DEFAULT 'Geral',
         person VARCHAR(50) DEFAULT 'Principal',
-        payment_method VARCHAR(50) DEFAULT 'Dinheiro',
-        status VARCHAR(20) DEFAULT 'Pago',
-        installment_current INT DEFAULT 1,
-        installment_total INT DEFAULT 1,
-        due_date TIMESTAMP,
         date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -113,14 +108,19 @@ const initDb = async () => {
       )
     `);
 
-    // MIGRAÇÃO AUTOMÁTICA: Adiciona as colunas na tabela transactions se elas não existirem
+    // MIGRAÇÃO COMPLETA: Adiciona todas as colunas ausentes na tabela transactions existente
     await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS account_id INT`).catch(() => {});
     await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS card_id INT`).catch(() => {});
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Dinheiro'`).catch(() => {});
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Pago'`).catch(() => {});
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS installment_current INT DEFAULT 1`).catch(() => {});
     await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS installment_total INT DEFAULT 1`).catch(() => {});
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS due_date TIMESTAMP`).catch(() => {});
+    
     await pool.query(`ALTER TABLE transactions ALTER COLUMN account_id DROP NOT NULL`).catch(() => {});
     await pool.query(`ALTER TABLE transactions ALTER COLUMN card_id DROP NOT NULL`).catch(() => {});
 
-    console.log('Base de dados SaaS estruturada e atualizada com sucesso.');
+    console.log('Base de dados SaaS estruturada e migrações aplicadas com sucesso.');
   } catch (err) {
     console.error('Erro ao inicializar base de dados:', err);
   }
