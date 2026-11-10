@@ -63,23 +63,26 @@ const initDb = async () => {
       )
     `);
 
+    // Criação base da tabela credit_cards
     await pool.query(`
       CREATE TABLE IF NOT EXISTS credit_cards (
         id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        account_id INT REFERENCES bank_accounts(id) ON DELETE CASCADE,
-        card_name VARCHAR(100) NOT NULL,
-        bank_emitter VARCHAR(100) NOT NULL,
-        holder_name VARCHAR(100) NOT NULL,
-        brand VARCHAR(50) DEFAULT 'Mastercard',
-        last_digits VARCHAR(4) DEFAULT '0000',
-        card_limit NUMERIC NOT NULL,
-        closing_day INT DEFAULT 5,
-        due_day INT DEFAULT 12,
-        color_bg VARCHAR(100) DEFAULT 'from-purple-700 to-purple-950',
-        dark_mode BOOLEAN DEFAULT FALSE
+        user_id INT REFERENCES users(id) ON DELETE CASCADE
       )
     `);
+
+    // Garante que todas as colunas necessárias existam na tabela credit_cards
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS account_id INT`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS card_name VARCHAR(100) DEFAULT 'Meu Cartão'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS bank_emitter VARCHAR(100) DEFAULT 'Banco'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS holder_name VARCHAR(100) DEFAULT 'Titular'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS brand VARCHAR(50) DEFAULT 'Mastercard'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS last_digits VARCHAR(4) DEFAULT '0000'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS card_limit NUMERIC DEFAULT 0`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS closing_day INT DEFAULT 5`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS due_day INT DEFAULT 12`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS color_bg VARCHAR(100) DEFAULT 'from-purple-700 to-purple-950'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS dark_mode BOOLEAN DEFAULT FALSE`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS transactions (
@@ -114,14 +117,6 @@ const initDb = async () => {
         status VARCHAR(20) DEFAULT 'Pendente'
       )
     `);
-
-    // Migrações automáticas para garantir todas as colunas necessárias na base existente
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS account_id INT REFERENCES bank_accounts(id) ON DELETE CASCADE`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS color_bg VARCHAR(100) DEFAULT 'from-purple-700 to-purple-950'`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS dark_mode BOOLEAN DEFAULT FALSE`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS brand VARCHAR(50) DEFAULT 'Mastercard'`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS last_digits VARCHAR(4) DEFAULT '0000'`);
-    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS closing_day INT DEFAULT 5`);
 
     console.log('Base de dados SaaS estruturada e atualizada com sucesso.');
   } catch (err) {
@@ -245,7 +240,7 @@ app.get('/api/credit-cards', authenticateToken, async (req, res) => {
     const query = `
       SELECT cc.*, ba.bank_name as account_bank, p.name as person_name
       FROM credit_cards cc
-      JOIN bank_accounts ba ON cc.account_id = ba.id
+      LEFT JOIN bank_accounts ba ON cc.account_id = ba.id
       LEFT JOIN people p ON ba.person_id = p.id
       WHERE cc.user_id = $1
       ORDER BY cc.id DESC
@@ -260,7 +255,7 @@ app.get('/api/credit-cards', authenticateToken, async (req, res) => {
 app.post('/api/credit-cards', authenticateToken, async (req, res) => {
   const { account_id, card_name, bank_emitter, holder_name, brand, last_digits, card_limit, closing_day, due_day, color_bg, dark_mode } = req.body;
   
-  if (!account_id || !card_name || !card_limit) {
+  if (!card_name || !card_limit) {
     return res.status(400).json({ error: 'Preencha os campos obrigatórios do cartão.' });
   }
 
@@ -270,7 +265,7 @@ app.post('/api/credit-cards', authenticateToken, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
       [
         req.user.id, 
-        parseInt(account_id, 10), 
+        account_id ? parseInt(account_id, 10) : null, 
         card_name, 
         bank_emitter || 'Banco', 
         holder_name || 'Titular', 
