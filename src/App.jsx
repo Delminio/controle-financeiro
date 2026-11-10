@@ -32,6 +32,8 @@ const INCOME_CATEGORIES = [
   'Renda de Aluguel', 'Dividendos', 'Rendimentos', 'Cashback', 'Outros Recebimentos'
 ];
 
+const PEOPLE_LIST = ['Bernadete', 'Principal', 'Família', 'Filho'];
+
 const PIE_COLORS = ['#10b981', '#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'];
 
 export default function App() {
@@ -54,7 +56,7 @@ export default function App() {
   const [type, setType] = useState('expense');
   const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
   const [account, setAccount] = useState('Nubank');
-  const [person, setPerson] = useState('Principal');
+  const [person, setPerson] = useState(PEOPLE_LIST[0]);
   const [submitting, setSubmitting] = useState(false);
 
   const API_URL = 'https://controle-financeiro-x8ah.onrender.com/api';
@@ -263,7 +265,6 @@ export default function App() {
       />
 
       <div className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 flex flex-col gap-6">
-        {/* Topo da Página Ativa */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
           <div>
             <h2 className="text-xl font-black text-slate-900 capitalize">{activeSection}</h2>
@@ -285,10 +286,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Conteúdo da Seção Ativa */}
         {activeSection === 'dashboard' && (
           <div className="flex flex-col gap-8">
-            {/* 3 Cartões Principais */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between">
                 <div>
@@ -325,7 +324,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Gráficos e Movimentações */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
                 <h3 className="font-extrabold text-slate-800 text-sm mb-4 pb-3 border-b border-slate-100">Gráfico de Pizza: Despesas por Categoria</h3>
@@ -385,7 +383,7 @@ export default function App() {
                             </div>
                             <div>
                               <p className="text-xs font-bold text-slate-800">{t.description}</p>
-                              <p className="text-[10px] text-slate-400 font-medium">{t.category} • {t.account}</p>
+                              <p className="text-[10px] text-slate-400 font-medium">{t.category} • {t.account} • {t.person}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
@@ -415,7 +413,7 @@ export default function App() {
                   <div key={t.id} className="py-4 flex items-center justify-between">
                     <div>
                       <p className="text-xs font-bold text-slate-800">{t.description}</p>
-                      <p className="text-[11px] text-slate-400 font-medium">{t.category} • {t.account} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
+                      <p className="text-[11px] text-slate-400 font-medium">{t.category} • {t.account} • Resp: {t.person} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className={`text-xs font-extrabold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-800'}`}>
@@ -450,7 +448,6 @@ export default function App() {
         {activeSection === 'profile' && <Profile />}
       </div>
 
-      {/* Modal de Novo Lançamento com Categorias e Ações Corretas */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">
@@ -487,12 +484,15 @@ export default function App() {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Pessoa Responsável</label>
-                  <input
-                    type="text"
+                  <select
                     value={person}
                     onChange={(e) => setPerson(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-emerald-600"
-                  />
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600 cursor-pointer"
+                  >
+                    {PEOPLE_LIST.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -518,7 +518,7 @@ export default function App() {
                 <select 
                   value={category} 
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600 cursor-pointer"
                 >
                   {(type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -531,7 +531,7 @@ export default function App() {
                 <select 
                   value={account} 
                   onChange={(e) => setAccount(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600 cursor-pointer"
                 >
                   <option value="Nubank">Nubank</option>
                   <option value="Inter">Inter</option>
