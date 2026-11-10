@@ -68,21 +68,35 @@ const initDb = async () => {
         id SERIAL PRIMARY KEY,
         user_id INT REFERENCES users(id) ON DELETE CASCADE,
         account_id INT,
-        card_name VARCHAR(100) NOT NULL,
-        bank_emitter VARCHAR(100) DEFAULT 'Banco',
-        holder_name VARCHAR(100) DEFAULT 'Titular',
-        brand VARCHAR(50) DEFAULT 'Mastercard',
-        last_digits VARCHAR(4) DEFAULT '0000',
-        card_limit NUMERIC DEFAULT 0,
-        closing_day INT DEFAULT 5,
-        due_day INT DEFAULT 12,
-        color_bg VARCHAR(100) DEFAULT 'from-purple-700 to-purple-950',
-        dark_mode BOOLEAN DEFAULT FALSE
+        card_name VARCHAR(100),
+        bank_emitter VARCHAR(100),
+        holder_name VARCHAR(100),
+        brand VARCHAR(50),
+        last_digits VARCHAR(4),
+        card_limit NUMERIC,
+        closing_day INT,
+        due_day INT,
+        color_bg VARCHAR(100),
+        dark_mode BOOLEAN
       )
     `);
 
-    // Remove restrição not-null antiga da coluna "name" se ela existir em credit_cards
+    // Limpeza de restrições NOT_NULL antigas conflitantes em colunas legadas
     await pool.query(`ALTER TABLE credit_cards ALTER COLUMN name DROP NOT NULL`).catch(() => {});
+    await pool.query(`ALTER TABLE credit_cards ALTER COLUMN credit_limit DROP NOT NULL`).catch(() => {});
+
+    // Garante que todas as colunas necessárias existam e tenham valores padrão seguros
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS account_id INT`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS card_name VARCHAR(100) DEFAULT 'Meu Cartão'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS bank_emitter VARCHAR(100) DEFAULT 'Banco'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS holder_name VARCHAR(100) DEFAULT 'Titular'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS brand VARCHAR(50) DEFAULT 'Mastercard'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS last_digits VARCHAR(4) DEFAULT '0000'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS card_limit NUMERIC DEFAULT 0`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS closing_day INT DEFAULT 5`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS due_day INT DEFAULT 12`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS color_bg VARCHAR(100) DEFAULT 'from-purple-700 to-purple-950'`);
+    await pool.query(`ALTER TABLE credit_cards ADD COLUMN IF NOT EXISTS dark_mode BOOLEAN DEFAULT FALSE`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS transactions (
