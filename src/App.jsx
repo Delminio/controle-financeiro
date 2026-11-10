@@ -237,6 +237,27 @@ export default function App() {
     }
   };
 
+  // EXCLUIR LANÇAMENTO
+  const handleDeleteTransaction = async (id) => {
+    if (!window.confirm('Tem certeza de que deseja apagar este lançamento?')) return;
+
+    try {
+      const res = await fetchWithAuth(`/transactions/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        loadAppData();
+      } else {
+        const errJson = await res.json();
+        alert(errJson.error || 'Erro ao apagar lançamento.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao conectar ao servidor.');
+    }
+  };
+
   const handleExportExcel = () => {
     window.open(`https://controle-financeiro-x8ah.onrender.com/api/export/excel?token=${token}`, '_blank');
   };
@@ -385,7 +406,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* DASHBOARD COM 4 CARDS: SEPARANDO CRÉDITO E DÉBITO */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Total de Receitas</span>
@@ -421,9 +441,18 @@ export default function App() {
                         <p className="font-bold text-slate-800">{t.description}</p>
                         <p className="text-[10px] text-slate-400">{t.category} • {t.payment_method || 'Dinheiro'}</p>
                       </div>
-                      <span className={`font-black ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
-                        {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
-                      </span>
+                      <div className="flex items-center gap-4">
+                        <span className={`font-black ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
+                          {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteTransaction(t.id)}
+                          className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-lg transition cursor-pointer"
+                          title="Apagar lançamento"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -463,9 +492,18 @@ export default function App() {
                         <p className="font-black text-slate-800 text-sm">{t.description}</p>
                         <p className="text-[11px] text-slate-400">{t.category} • {t.payment_method || 'Dinheiro'} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
                       </div>
-                      <span className={`font-black text-sm ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
-                        {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
-                      </span>
+                      <div className="flex items-center gap-4">
+                        <span className={`font-black text-sm ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
+                          {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteTransaction(t.id)}
+                          className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1"
+                          title="Apagar lançamento"
+                        >
+                          🗑️ <span className="hidden sm:inline">Excluir</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
