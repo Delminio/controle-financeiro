@@ -27,27 +27,39 @@ const BANKS_CONFIG = [
 export default function CreditCards() {
   const [cards, setCards] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [selectedBank, setSelectedBank] = useState(BANKS_CONFIG[0]);
-  const [cardName, setCardName] = useState('Meu Nubank');
-  const [holderName, setHolderName] = useState('Delminio Silva');
+  
+  const [cardName, setCardName] = useState('Meu Cartão');
+  const [holderName, setHolderName] = useState('Maria Silva');
   const [accountId, setAccountId] = useState('');
   const [cardLimit, setCardLimit] = useState('');
   const [lastDigits, setLastDigits] = useState('4321');
-  const [dueDay, setDueDay] = useState('10');
-  const [darkMode, setDarkMode] = useState(false);
+  const [closingDay, setClosingDay] = useState('5');
+  const [dueDay, setDueDay] = useState('12');
   const [brand, setBrand] = useState('Mastercard');
+  const [status, setStatus] = useState('Ativo');
+  const [darkMode, setDarkMode] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [cardRes, accRes] = await Promise.all([
+      const [cardRes, accRes, transRes] = await Promise.all([
         fetchWithAuth('/credit-cards'),
-        fetchWithAuth('/bank-accounts')
+        fetchWithAuth('/bank-accounts'),
+        fetchWithAuth('/transactions')
       ]);
       if (cardRes.ok) setCards(await cardRes.json());
       if (accRes.ok) {
         const accData = await accRes.json();
         setAccounts(accData);
-        if (accData.length > 0 && !accountId) setAccountId(accData[0].id);
+        if (accData.length > 0 && !accountId) {
+          setAccountId(accData[0].id);
+          if (accData[0].person_name) setHolderName(accData[0].person_name);
+        }
+      }
+      if (transRes.ok) {
+        const transJson = await transRes.json();
+        setTransactions(transJson.transactions || []);
       }
     } catch (err) {
       console.error(err);
@@ -64,10 +76,25 @@ export default function CreditCards() {
     setBrand(bank.brand);
   };
 
+  const handleAccountChange = (e) => {
+    const accId = e.target.value;
+    setAccountId(accId);
+    const foundAcc = accounts.find(a => String(a.id) === String(accId));
+    if (foundAcc && foundAcc.person_name) {
+      setHolderName(foundAcc.person_name);
+    }
+  };
+
   const handleSaveCard = async (e) => {
     e.preventDefault();
-    if (!accountId) return alert('Selecione uma conta bancária vinculada.');
-    if (!cardLimit) return alert('Informe o limite do cartão.');
+    if (!accountId) {
+      alert('Selecione uma conta bancária vinculada.');
+      return;
+    }
+    if (!cardName || !cardLimit || !dueDay) {
+      alert('Preencha os campos obrigatórios.');
+      return;
+    }
 
     try {
       const res = await fetchWithAuth('/credit-cards', {
@@ -80,7 +107,9 @@ export default function CreditCards() {
           brand,
           last_digits: lastDigits || '0000',
           card_limit: parseFloat(cardLimit),
-          due_day: parseInt(dueDay, 10) || 10,
+          closing_day: parseInt(closing_day, 10) || 5,
+          due_day: parseInt(dueDay, 10) || 12,
+          status,
           color_bg: selectedBank.bg,
           dark_mode: darkMode
         })
@@ -88,7 +117,7 @@ export default function CreditCards() {
 
       if (res.ok) {
         setCardLimit('');
-        alert('Cartão criado e personalizado com sucesso!');
+        alert('Cartão cadastrado com sucesso!');
         fetchData();
       } else {
         const err = await res.json();
@@ -96,7 +125,6 @@ export default function CreditCards() {
       }
     } catch (err) {
       console.error(err);
-      alert('Erro de conexão ao salvar cartão.');
     }
   };
 
@@ -116,32 +144,29 @@ export default function CreditCards() {
     <div className="flex flex-col gap-6">
       <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-slate-900">Cartões</h2>
-          <p className="text-xs font-medium text-slate-500 mt-0.5">Gerencie seus cartões e personalize o visual em tempo real</p>
+          <h2 className="text-xl font-black text-slate-900">Cartões de Crédito</h2>
+          <p className="text-xs font-medium text-slate-500 mt-0.5">Gestão completa de limites, faturas e titulares</p>
         </div>
       </div>
 
-      {/* Grid Principal: Editor de Personalização + Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Bloco Esquerdo: Formulário & Seletor de Cores */}
         <div className="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col gap-5">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
             <span className="text-lg">💳</span>
-            <h3 className="font-extrabold text-slate-800 text-sm">Personalizar e Cadastrar Cartão</h3>
+            <h3 className="font-extrabold text-slate-800 text-sm">Adicionar Novo Cartão</h3>
           </div>
 
           <form onSubmit={handleSaveCard} className="flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">Conta Bancária Vinculada (Obrigatório)</label>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Conta Bancária Vinculada</label>
               <select
                 value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600 cursor-pointer"
+                onChange={handleAccountChange}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                 required
               >
                 {accounts.length === 0 ? (
-                  <option value="">Nenhuma conta cadastrada (Cadastre na aba Contas)</option>
+                  <option value="">Nenhuma conta bancária disponível</option>
                 ) : (
                   accounts.map(acc => (
                     <option key={acc.id} value={acc.id}>{acc.bank_name} - Resp: {acc.person_name}</option>
@@ -157,7 +182,7 @@ export default function CreditCards() {
                   type="text"
                   value={cardName}
                   onChange={(e) => setCardName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
                   required
                 />
               </div>
@@ -167,15 +192,59 @@ export default function CreditCards() {
                   type="text"
                   value={holderName}
                   onChange={(e) => setHolderName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
                   required
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Limite (R$)</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Bandeira</label>
+                <select
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-semibold"
+                >
+                  <option value="Mastercard">Mastercard</option>
+                  <option value="Visa">Visa</option>
+                  <option value="Elo">Elo</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">4 Dígitos</label>
+                <input
+                  type="text"
+                  maxLength="4"
+                  value={lastDigits}
+                  onChange={(e) => setLastDigits(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-semibold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Fechamento</label>
+                <input
+                  type="number"
+                  value={closingDay}
+                  onChange={(e) => setClosingDay(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-semibold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Vencimento</label>
+                <input
+                  type="number"
+                  value={dueDay}
+                  onChange={(e) => setDueDay(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-semibold"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Limite Total (R$)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -187,29 +256,21 @@ export default function CreditCards() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Últimos 4 Dígitos</label>
-                <input
-                  type="text"
-                  maxLength="4"
-                  value={lastDigits}
-                  onChange={(e) => setLastDigits(e.target.value)}
+                <label className="block text-xs font-bold text-slate-600 mb-1">Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Vencimento (Dia)</label>
-                <input
-                  type="number"
-                  value={dueDay}
-                  onChange={(e) => setDueDay(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
-                />
+                >
+                  <option value="Ativo">Ativo</option>
+                  <option value="Bloqueado">Bloqueado</option>
+                </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">Escolha a Cor / Banco do Seu Cartão</label>
-              <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 max-h-40 overflow-y-auto p-1 hide-scrollbar">
+              <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">Banco Emissor / Cor</label>
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 max-h-36 overflow-y-auto p-1">
                 {BANKS_CONFIG.map(bank => (
                   <button
                     type="button"
@@ -224,19 +285,6 @@ export default function CreditCards() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-              <span className="text-xs font-bold text-slate-700">Aplicar tema escuro no cartão</span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={darkMode} 
-                  onChange={(e) => setDarkMode(e.target.checked)} 
-                  className="sr-only peer" 
-                />
-                <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-              </label>
-            </div>
-
             <button
               type="submit"
               className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 rounded-2xl text-xs shadow-lg shadow-emerald-200 transition cursor-pointer"
@@ -246,26 +294,19 @@ export default function CreditCards() {
           </form>
         </div>
 
-        {/* Bloco Direito: Visualização em Tempo Real do Cartão */}
         <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-              <h3 className="font-extrabold text-slate-800 text-sm">Visualização do Seu Cartão</h3>
+              <h3 className="font-extrabold text-slate-800 text-sm">Visualização em Tempo Real</h3>
               <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Em tempo real
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Preview
               </span>
             </div>
 
-            <div className={`w-full aspect-[1.58/1] rounded-3xl bg-gradient-to-br ${darkMode ? 'from-slate-900 via-zinc-900 to-black' : selectedBank.bg} p-6 flex flex-col justify-between shadow-xl relative overflow-hidden transition-all duration-300 border border-white/10 my-4`}>
-              <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-
+            <div className={`w-full aspect-[1.58/1] rounded-3xl bg-gradient-to-br ${selectedBank.bg} p-6 flex flex-col justify-between shadow-xl relative overflow-hidden border border-white/10 my-4 text-white`}>
               <div className="flex items-center justify-between relative z-10">
-                <span className="text-base font-black tracking-wider uppercase text-white drop-shadow-sm">
-                  {selectedBank.name}
-                </span>
-                <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-black/20 backdrop-blur-md text-white">
-                  {cardName}
-                </span>
+                <span className="text-base font-black tracking-wider uppercase">{selectedBank.name}</span>
+                <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-black/20 backdrop-blur-md">{cardName}</span>
               </div>
 
               <div className="flex items-center gap-3 relative z-10 my-auto">
@@ -286,39 +327,62 @@ export default function CreditCards() {
               </div>
             </div>
           </div>
-
-          <div className="bg-slate-50 border border-slate-200/60 p-3.5 rounded-2xl flex items-center gap-3 mt-4">
-            <span className="text-blue-600 text-lg">💡</span>
-            <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-              <strong className="text-slate-800">Dica:</strong> Cada cartão mantém a sua identidade visual personalizada de forma independente.
-            </p>
-          </div>
         </div>
-
       </div>
 
-      {/* Lista de Cartões Ativos */}
       <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-        <h3 className="font-extrabold text-slate-800 text-sm mb-4 pb-3 border-b border-slate-100">Cartões Ativos ({cards.length})</h3>
+        <h3 className="font-extrabold text-slate-800 text-sm mb-4 pb-3 border-b border-slate-100">
+          Cartões Cadastrados ({cards.length})
+        </h3>
         {cards.length === 0 ? (
           <p className="text-xs text-slate-400 py-6 text-center">Nenhum cartão cadastrado no momento.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cards.map(c => (
-              <div key={c.id} className="bg-slate-50 border border-slate-200/70 p-4 rounded-2xl flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-black text-slate-900">{c.card_name}</span>
-                    <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-md">{c.bank_emitter}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {cards.map(c => {
+              const limitTotal = parseFloat(c.card_limit) || 0;
+              // Soma os gastos feitos especificamente neste cartão
+              const limitUsed = transactions
+                .filter(t => String(t.card_id) === String(c.id) && t.type === 'expense')
+                .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+              const limitAvailable = limitTotal - limitUsed;
+              const usagePercent = limitTotal > 0 ? Math.min(100, Math.round((limitUsed / limitTotal) * 100)) : 0;
+
+              return (
+                <div key={c.id} className="bg-slate-50 border border-slate-200/70 p-5 rounded-3xl flex flex-col justify-between gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-black text-slate-900">{c.card_name}</span>
+                      <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">{c.status || 'Ativo'}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mb-3">Banco: <strong>{c.bank_emitter}</strong> • Titular: <strong>{c.holder_name}</strong></p>
+
+                    <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500 font-bold">Limite Total:</span>
+                        <span className="font-black text-slate-900">{formatMoney(limitTotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500 font-bold">Disponível:</span>
+                        <span className="font-black text-emerald-600">{formatMoney(limitAvailable)}</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-1">
+                        <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${usagePercent}%` }}></div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-[11px] text-slate-500 flex justify-between">
+                      <span>Fechamento: Dia {c.closing_day}</span>
+                      <span>Vencimento: Dia {c.due_day}</span>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-500 font-medium">Titular: {c.holder_name} • Limite: {formatMoney(c.card_limit)}</p>
+
+                  <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-600">Final {c.last_digits}</span>
+                    <button onClick={() => handleDelete(c.id)} className="text-rose-500 font-bold hover:underline cursor-pointer">Excluir Cartão</button>
+                  </div>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-700">Vencimento: Dia {c.due_day}</span>
-                  <button onClick={() => handleDelete(c.id)} className="text-rose-500 font-bold hover:underline cursor-pointer">Excluir</button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
