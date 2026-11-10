@@ -90,8 +90,6 @@ const initDb = async () => {
         type VARCHAR(10) NOT NULL,
         category VARCHAR(100) DEFAULT 'Outros',
         account VARCHAR(50) DEFAULT 'Geral',
-        account_id INT,
-        card_id INT,
         person VARCHAR(50) DEFAULT 'Principal',
         payment_method VARCHAR(50) DEFAULT 'Dinheiro',
         status VARCHAR(20) DEFAULT 'Pago',
@@ -115,10 +113,12 @@ const initDb = async () => {
       )
     `);
 
-    // Garantia de migração e permissão para nulos em chaves de transações
+    // MIGRAÇÃO AUTOMÁTICA: Adiciona as colunas na tabela transactions se elas não existirem
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS account_id INT`).catch(() => {});
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS card_id INT`).catch(() => {});
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS installment_total INT DEFAULT 1`).catch(() => {});
     await pool.query(`ALTER TABLE transactions ALTER COLUMN account_id DROP NOT NULL`).catch(() => {});
     await pool.query(`ALTER TABLE transactions ALTER COLUMN card_id DROP NOT NULL`).catch(() => {});
-    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS installment_total INT DEFAULT 1`).catch(() => {});
 
     console.log('Base de dados SaaS estruturada e atualizada com sucesso.');
   } catch (err) {
