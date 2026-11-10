@@ -20,8 +20,33 @@ import Settings from './pages/Settings';
 import Sidebar from './components/Sidebar';
 import { fetchWithAuth } from './services/api';
 
-const DEFAULT_EXPENSE_CATEGORIES = ['Mercado', 'Aluguel', 'Transporte', 'Lazer', 'Saúde', 'Educação', 'Restaurante', 'Contas Fixas', 'Outros'];
-const DEFAULT_INCOME_CATEGORIES = ['Salário', 'Freelance', 'Investimentos', 'Vendas', 'Rendimento', 'Outros'];
+const EXPENSE_CATEGORIES = [
+  'Supermercado',
+  'Aluguel / Moradia',
+  'Transporte / Combustível',
+  'Alimentação / Restaurante',
+  'Saúde / Farmácia',
+  'Educação / Cursos',
+  'Lazer / Viagens',
+  'Contas Fixas (Luz, Água, Internet)',
+  'Assinaturas & Serviços',
+  'Vestuário & Acessórios',
+  'Manutenção / Veículo',
+  'Cuidados Pessoais',
+  'Impostos & Taxas',
+  'Outras Despesas'
+];
+
+const INCOME_CATEGORIES = [
+  'Salário Mensal',
+  'Rendimento de Investimentos',
+  'Prestação de Serviços / Freela',
+  'Vendas',
+  'Comissões & Bônus',
+  'Reembolso',
+  'Presentes / Doações',
+  'Outras Receitas'
+];
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -35,31 +60,37 @@ export default function App() {
   const [name, setName] = useState('');
   const [authError, setAuthError] = useState('');
 
-  // Modal de Transações
-  const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [transType, setTransType] = useState('expense'); // 'expense' ou 'income'
-  const [category, setCategory] = useState('Mercado');
-  const [paymentMethod, setPaymentMethod] = useState('Dinheiro');
-  const [cardId, setCardId] = useState('');
-  const [installmentsTotal, setInstallmentsTotal] = useState('1');
+  // Modais Separados de Despesa e Receita
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [showIncomeModal, setShowIncomeModal] = useState(false);
+
+  // Estados do Formulário de Despesa
+  const [expenseDesc, setExpenseDesc] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseCategory, setExpenseCategory] = useState(EXPENSE_CATEGORIES[0]);
+  const [expensePaymentMethod, setExpensePaymentMethod] = useState('Dinheiro');
+  const [expenseCardId, setExpenseCardId] = useState('');
+  const [expenseInstallments, setExpenseInstallments] = useState('1');
+
+  // Estados do Formulário de Receita
+  const [incomeDesc, setIncomeDesc] = useState('');
+  const [incomeAmount, setIncomeAmount] = useState('');
+  const [incomeCategory, setIncomeCategory] = useState(INCOME_CATEGORIES[0]);
+  const [incomePaymentMethod, setIncomePaymentMethod] = useState('PIX');
 
   // Dados carregados da API
   const [cardsList, setCardsList] = useState([]);
   const [accountsList, setAccountsList] = useState([]);
-  const [categoriesList, setCategoriesList] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [summary, setSummary] = useState({ totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 });
 
   const loadAppData = async () => {
     if (!token) return;
     try {
-      const [transRes, cardRes, accRes, catRes] = await Promise.all([
+      const [transRes, cardRes, accRes] = await Promise.all([
         fetchWithAuth('/transactions'),
         fetchWithAuth('/credit-cards'),
-        fetchWithAuth('/bank-accounts'),
-        fetchWithAuth('/categories').catch(() => null)
+        fetchWithAuth('/bank-accounts')
       ]);
 
       if (transRes && transRes.ok) {
@@ -69,7 +100,6 @@ export default function App() {
       }
       if (cardRes && cardRes.ok) setCardsList(await cardRes.json());
       if (accRes && accRes.ok) setAccountsList(await accRes.json());
-      if (catRes && catRes.ok) setCategoriesList(await catRes.json());
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
     }
@@ -80,19 +110,6 @@ export default function App() {
       loadAppData();
     }
   }, [token]);
-
-  // Alterna o padrão de categoria quando muda entre Despesa e Receita
-  const handleTypeChange = (type) => {
-    setTransType(type);
-    if (type === 'income') {
-      setCategory('Salário');
-      setPaymentMethod('PIX');
-      setCardId('');
-    } else {
-      setCategory('Mercado');
-      setPaymentMethod('Dinheiro');
-    }
-  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -125,12 +142,13 @@ export default function App() {
     setUser({});
   };
 
-  const handleCreateTransaction = async (e) => {
+  // SUBMETER DESPESA
+  const handleCreateExpense = async (e) => {
     e.preventDefault();
-    if (!description || !amount) return;
+    if (!expenseDesc || !expenseAmount) return;
 
-    if (transType === 'expense' && paymentMethod === 'Cartão de Crédito' && !cardId) {
-      alert('Selecione um cartão de crédito válido.');
+    if (expensePaymentMethod === 'Cartão de Crédito' && !expenseCardId) {
+      alert('Selecione o cartão de crédito utilizado.');
       return;
     }
 
@@ -138,31 +156,71 @@ export default function App() {
       const res = await fetchWithAuth('/transactions', {
         method: 'POST',
         body: JSON.stringify({
-          description,
-          amount: parseFloat(amount),
-          type: transType,
-          category,
+          description: expenseDesc,
+          amount: parseFloat(expenseAmount),
+          type: 'expense',
+          category: expenseCategory,
           account: accountsList.length > 0 ? accountsList[0].bank_name : 'Nubank',
-          account_id: accountsList.length > 0 ? accountsList[0].id : null,
-          card_id: transType === 'expense' && paymentMethod === 'Cartão de Crédito' && cardId ? parseInt(cardId, 10) : null,
-          payment_method: paymentMethod,
-          installment_total: transType === 'expense' && paymentMethod === 'Cartão de Crédito' ? parseInt(installmentsTotal, 10) || 1 : 1,
+          account_id: accountsList.length > 0 ? parseInt(accountsList[0].id, 10) : null,
+          card_id: expensePaymentMethod === 'Cartão de Crédito' && expenseCardId ? parseInt(expenseCardId, 10) : null,
+          payment_method: expensePaymentMethod,
+          installment_total: expensePaymentMethod === 'Cartão de Crédito' ? parseInt(expenseInstallments, 10) || 1 : 1,
           status: 'Pago'
         })
       });
 
       if (res.ok) {
-        setDescription('');
-        setAmount('');
-        setShowTransactionModal(false);
+        setExpenseDesc('');
+        setExpenseAmount('');
+        setExpenseCardId('');
+        setShowExpenseModal(false);
         loadAppData();
-        alert('Lançamento efetuado com sucesso!');
+        alert('Despesa lançada com sucesso!');
       } else {
         const errJson = await res.json();
-        alert(errJson.error || 'Erro ao salvar lançamento.');
+        alert(errJson.error || 'Erro ao salvar despesa na base de dados.');
       }
     } catch (err) {
       console.error(err);
+      alert('Erro ao conectar ao servidor.');
+    }
+  };
+
+  // SUBMETER RECEITA
+  const handleCreateIncome = async (e) => {
+    e.preventDefault();
+    if (!incomeDesc || !incomeAmount) return;
+
+    try {
+      const res = await fetchWithAuth('/transactions', {
+        method: 'POST',
+        body: JSON.stringify({
+          description: incomeDesc,
+          amount: parseFloat(incomeAmount),
+          type: 'income',
+          category: incomeCategory,
+          account: accountsList.length > 0 ? accountsList[0].bank_name : 'Nubank',
+          account_id: accountsList.length > 0 ? parseInt(accountsList[0].id, 10) : null,
+          card_id: null,
+          payment_method: incomePaymentMethod,
+          installment_total: 1,
+          status: 'Pago'
+        })
+      });
+
+      if (res.ok) {
+        setIncomeDesc('');
+        setIncomeAmount('');
+        setShowIncomeModal(false);
+        loadAppData();
+        alert('Receita lançada com sucesso!');
+      } else {
+        const errJson = await res.json();
+        alert(errJson.error || 'Erro ao salvar receita na base de dados.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao conectar ao servidor.');
     }
   };
 
@@ -236,14 +294,8 @@ export default function App() {
 
   const formatMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
-  // Lista dinâmica de categorias com base nas existentes e no tipo de transação
-  const availableCategories = transType === 'expense'
-    ? Array.from(new Set([...DEFAULT_EXPENSE_CATEGORIES, ...categoriesList.map(c => c.name || c)]))
-    : Array.from(new Set([...DEFAULT_INCOME_CATEGORIES, ...categoriesList.map(c => c.name || c)]));
-
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      {/* Header Superior */}
       <header className="bg-white border-b border-slate-200/80 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-base shadow-md">
@@ -266,7 +318,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Menu de Abas */}
+      {/* Navegação de Abas */}
       <nav className="bg-white border-b border-slate-200/60 px-6 py-3 flex gap-2 overflow-x-auto hide-scrollbar shadow-xs">
         {[
           { id: 'dashboard', label: '📊 Dashboard' },
@@ -298,21 +350,24 @@ export default function App() {
         ))}
       </nav>
 
-      {/* Conteúdo Principal */}
+      {/* Conteúdo da Aplicação */}
       <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
         {activeTab === 'dashboard' && (
           <div className="flex flex-col gap-6">
             <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-black text-slate-900">Visão Geral</h2>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">Resumo financeiro de contas e lançamentos</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">Resumo financeiro e movimentações</p>
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={handleExportExcel} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-xs cursor-pointer">
+                <button onClick={handleExportExcel} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs cursor-pointer">
                   📥 Exportar Excel
                 </button>
-                <button onClick={() => setShowTransactionModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-md cursor-pointer transition">
-                  + Novo Lançamento
+                <button onClick={() => setShowExpenseModal(true)} className="bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer transition">
+                  - Lançar Despesa
+                </button>
+                <button onClick={() => setShowIncomeModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer transition">
+                  + Lançar Receita
                 </button>
               </div>
             </div>
@@ -363,11 +418,14 @@ export default function App() {
                 <p className="text-xs font-medium text-slate-500 mt-0.5">Histórico completo de receitas e despesas</p>
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={handleExportExcel} className="bg-slate-100 text-slate-700 font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-xs cursor-pointer">
+                <button onClick={handleExportExcel} className="bg-slate-100 text-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs cursor-pointer">
                   📥 Exportar Excel
                 </button>
-                <button onClick={() => setShowTransactionModal(true)} className="bg-emerald-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-md cursor-pointer">
-                  + Novo Lançamento
+                <button onClick={() => setShowExpenseModal(true)} className="bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer">
+                  - Lançar Despesa
+                </button>
+                <button onClick={() => setShowIncomeModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer">
+                  + Lançar Receita
                 </button>
               </div>
             </div>
@@ -412,23 +470,26 @@ export default function App() {
         {activeTab === 'profile' && <Profile />}
       </main>
 
-      {/* Modal de Novo Lançamento Corrigido */}
-      {showTransactionModal && (
+      {/* JANELA / MODAL 1: LANÇAR DESPESA (-) */}
+      {showExpenseModal && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-              <h3 className="font-bold text-slate-800 text-sm">Novo Lançamento</h3>
-              <button onClick={() => setShowTransactionModal(false)} className="text-slate-400 font-bold cursor-pointer">✕</button>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-rose-500"></span>
+                <h3 className="font-extrabold text-rose-600 text-sm">Lançar Nova Despesa (-)</h3>
+              </div>
+              <button onClick={() => setShowExpenseModal(false)} className="text-slate-400 font-bold cursor-pointer">✕</button>
             </div>
             
-            <form onSubmit={handleCreateTransaction} className="flex flex-col gap-3">
+            <form onSubmit={handleCreateExpense} className="flex flex-col gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Descrição</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Descrição da Despesa</label>
                 <input
                   type="text"
-                  placeholder="Ex: Mercado, Luz, Salário"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Ex: Compra Atacadão, Farmácia, Luz"
+                  value={expenseDesc}
+                  onChange={(e) => setExpenseDesc(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
                   required
                 />
@@ -440,69 +501,48 @@ export default function App() {
                   type="number"
                   step="0.01"
                   placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  value={expenseAmount}
+                  onChange={(e) => setExpenseAmount(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
                   required
                 />
               </div>
 
-              {/* BOTOES DESPESA / RECEITA COM LOGICA SEPARADA */}
-              <div className="flex gap-2 my-1">
-                <button
-                  type="button"
-                  onClick={() => handleTypeChange('expense')}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${transType === 'expense' ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-100 text-slate-600'}`}
-                >
-                  Despesa (-)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTypeChange('income')}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${transType === 'income' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 text-slate-600'}`}
-                >
-                  Receita (+)
-                </button>
-              </div>
-
-              {/* CATEGORIA DINAMICA SEGUNDO O TIPO */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Categoria</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Categoria da Despesa</label>
                 <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  value={expenseCategory}
+                  onChange={(e) => setExpenseCategory(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                 >
-                  {availableCategories.map(cat => (
+                  {EXPENSE_CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
               </div>
 
-              {/* FORMA DE PAGAMENTO */}
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Forma de Pagamento</label>
                 <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  value={expensePaymentMethod}
+                  onChange={(e) => setExpensePaymentMethod(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                 >
                   <option value="Dinheiro">Dinheiro</option>
                   <option value="PIX">PIX</option>
                   <option value="Débito">Débito</option>
-                  {transType === 'expense' && <option value="Cartão de Crédito">Cartão de Crédito</option>}
+                  <option value="Cartão de Crédito">Cartão de Crédito</option>
                   <option value="Outros">Outros</option>
                 </select>
               </div>
 
-              {/* SELECAO DE CARTAO E PARCELAMENTO (SO APARECE EM DESPESA + CARTAO DE CREDITO) */}
-              {transType === 'expense' && paymentMethod === 'Cartão de Crédito' && (
+              {expensePaymentMethod === 'Cartão de Crédito' && (
                 <>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Selecionar Cartão</label>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Selecionar Cartão de Crédito</label>
                     <select
-                      value={cardId}
-                      onChange={(e) => setCardId(e.target.value)}
+                      value={expenseCardId}
+                      onChange={(e) => setExpenseCardId(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                       required
                     >
@@ -518,8 +558,8 @@ export default function App() {
                   <div>
                     <label className="block text-xs font-bold text-slate-600 mb-1">Número de Parcelas</label>
                     <select
-                      value={installmentsTotal}
-                      onChange={(e) => setInstallmentsTotal(e.target.value)}
+                      value={expenseInstallments}
+                      onChange={(e) => setExpenseInstallments(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
                     >
                       {[1,2,3,4,5,6,7,8,9,10,11,12].map(num => (
@@ -530,8 +570,81 @@ export default function App() {
                 </>
               )}
 
-              <button type="submit" className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3 rounded-2xl shadow-md cursor-pointer transition">
-                Confirmar Lançamento
+              <button type="submit" className="mt-3 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs py-3 rounded-2xl shadow-md cursor-pointer transition">
+                Confirmar Despesa (-)
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* JANELA / MODAL 2: LANÇAR RECEITA (+) */}
+      {showIncomeModal && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <h3 className="font-extrabold text-emerald-600 text-sm">Lançar Nova Receita (+)</h3>
+              </div>
+              <button onClick={() => setShowIncomeModal(false)} className="text-slate-400 font-bold cursor-pointer">✕</button>
+            </div>
+            
+            <form onSubmit={handleCreateIncome} className="flex flex-col gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Descrição da Receita</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Salário, Freelance, Rendimentos"
+                  value={incomeDesc}
+                  onChange={(e) => setIncomeDesc(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Valor (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={incomeAmount}
+                  onChange={(e) => setIncomeAmount(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Categoria da Receita</label>
+                <select
+                  value={incomeCategory}
+                  onChange={(e) => setIncomeCategory(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                >
+                  {INCOME_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Forma de Recebimento</label>
+                <select
+                  value={incomePaymentMethod}
+                  onChange={(e) => setIncomePaymentMethod(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                >
+                  <option value="PIX">PIX</option>
+                  <option value="Transferência">Transferência / TED</option>
+                  <option value="Dinheiro">Dinheiro</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
+
+              <button type="submit" className="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3 rounded-2xl shadow-md cursor-pointer transition">
+                Confirmar Receita (+)
               </button>
             </form>
           </div>
