@@ -17,7 +17,6 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Middleware de Autenticação JWT
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -30,10 +29,8 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Inicialização das Tabelas do Sistema Financeiro no Neon
 const initDb = async () => {
   try {
-    // 1. Tabela de Utilizadores
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -44,7 +41,6 @@ const initDb = async () => {
       )
     `);
 
-    // 2. Tabela de Transações
     await pool.query(`
       CREATE TABLE IF NOT EXISTS transactions (
         id BIGINT PRIMARY KEY,
@@ -54,85 +50,18 @@ const initDb = async () => {
         type VARCHAR(10) NOT NULL,
         category VARCHAR(100) DEFAULT 'Outros',
         account VARCHAR(50) DEFAULT 'Nubank',
-        person VARCHAR(50) DEFAULT 'Bernadete (Mae)',
+        person VARCHAR(50) DEFAULT 'Principal',
         status VARCHAR(20) DEFAULT 'Pago',
         date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-
-    // 3. Tabela de Cartões de Crédito
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS credit_cards (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        name VARCHAR(100) NOT NULL,
-        bank VARCHAR(50),
-        credit_limit NUMERIC NOT NULL,
-        closing_day INT NOT NULL,
-        due_day INT NOT NULL
-      )
-    `);
-
-    // 4. Tabela de Parcelas / Compras Parceladas
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS installment_purchases (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        title VARCHAR(150) NOT NULL,
-        total_amount NUMERIC NOT NULL,
-        total_installments INT NOT NULL,
-        paid_installments INT DEFAULT 0,
-        installment_amount NUMERIC NOT NULL,
-        card_name VARCHAR(100),
-        due_day INT DEFAULT 10
-      )
-    `);
-
-    // 5. Tabela de Investimentos e Reserva de Emergência
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS investments (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        title VARCHAR(100) NOT NULL,
-        category VARCHAR(50) NOT NULL,
-        amount NUMERIC NOT NULL,
-        institution VARCHAR(100)
-      )
-    `);
-
-    // 6. Tabela de Empréstimos e Dívidas
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS debts (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        person_or_institution VARCHAR(100) NOT NULL,
-        type VARCHAR(20) NOT NULL, -- 'emprestei' ou 'peguei'
-        total_amount NUMERIC NOT NULL,
-        paid_amount NUMERIC DEFAULT 0,
-        due_date DATE
-      )
-    `);
-
-    // 7. Tabela de Metas Financeiras
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS goals (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        title VARCHAR(100) NOT NULL,
-        target_amount NUMERIC NOT NULL,
-        current_amount NUMERIC DEFAULT 0,
-        target_date DATE
-      )
-    `);
-
-    console.log('Estrutura de tabelas SaaS inicializada com sucesso no Neon.');
+    console.log('Base de dados inicializada com sucesso.');
   } catch (err) {
-    console.error('Erro ao inicializar tabelas:', err);
+    console.error('Erro ao inicializar base de dados:', err);
   }
 };
 initDb();
 
-// --- AUTHENTICATION ROUTES ---
 app.post('/api/auth/register', async (req, res) => {
   const { name, email, password } = req.body;
   if (!name || !email || !password) return res.status(400).json({ error: 'Preencha todos os campos.' });
@@ -174,7 +103,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// --- TRANSACTIONS ROUTES ---
 app.get('/api/transactions', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM transactions WHERE user_id = $1 ORDER BY date DESC', [req.user.id]);
@@ -202,11 +130,12 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
     `;
     const result = await pool.query(query, [
       id, req.user.id, description, parseFloat(amount), type,
-      category || 'Outros', account || 'Nubank', person || 'Bernadete (Mae)', status || 'Pago'
+      category || 'Outros', account || 'Nubank', person || 'Principal', status || 'Pago'
     ]);
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao salvar lançamento.' });
+    console.error('Erro ao gravar transação:', err);
+    res.status(500).json({ error: 'Erro ao salvar lançamento na base de dados.' });
   }
 });
 
@@ -219,7 +148,6 @@ app.delete('/api/transactions/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// --- EXPORT TO EXCEL ROUTE (.XLSX MULTI-ABA) ---
 app.get('/api/export/excel', authenticateToken, async (req, res) => {
   try {
     const transResult = await pool.query('SELECT description, amount, type, category, account, person, status, date FROM transactions WHERE user_id = $1 ORDER BY date DESC', [req.user.id]);
@@ -243,7 +171,6 @@ app.get('/api/export/excel', authenticateToken, async (req, res) => {
     res.setHeader('Content-Disposition', 'attachment; filename="Relatorio_Financeiro.xlsx"');
     res.send(buffer);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Erro ao gerar arquivo Excel.' });
   }
 });

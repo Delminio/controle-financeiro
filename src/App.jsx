@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from './services/api';
 import Sidebar from './components/Sidebar';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 import Categories from './pages/Categories';
 import Accounts from './pages/Accounts';
@@ -47,9 +47,7 @@ export default function App() {
 
   const [activeSection, setActiveSection] = useState('dashboard');
   const [data, setData] = useState({ summary: { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 }, transactions: [] });
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Form de Lançamento
   const [showModal, setShowModal] = useState(false);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -136,16 +134,20 @@ export default function App() {
         setAmount('');
         setShowModal(false);
         fetchData();
+      } else {
+        const errJson = await res.json();
+        alert(errJson.error || 'Erro ao salvar lançamento.');
       }
     } catch (err) {
       console.error(err);
+      alert('Erro de conexão ao salvar lançamento.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteTransaction = async (id) => {
-    if (!confirm('Tem certeza que deseja apagar este lançamento?')) return;
+    if (!confirm('Deseja apagar este lançamento?')) return;
     try {
       await fetchWithAuth('/transactions/' + id, { method: 'DELETE' });
       fetchData();
@@ -161,14 +163,12 @@ export default function App() {
 
   const formatMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
-  // Agrupamento para Gráfico de Pizza
   const getPieData = () => {
     const expenses = data.transactions.filter(t => t.type === 'expense');
     const grouped = expenses.reduce((acc, t) => {
       acc[t.category] = (acc[t.category] || 0) + parseFloat(t.amount);
       return acc;
     }, {});
-
     return Object.keys(grouped).map(cat => ({ name: cat, value: grouped[cat] }));
   };
 
@@ -178,10 +178,10 @@ export default function App() {
         <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl border border-slate-100">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-3xl mx-auto mb-4 shadow-xl shadow-emerald-200">
-              O
+              📊
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Organize Financeiro</h1>
-            <p className="text-xs font-semibold text-slate-500 mt-1">Plataforma Profissional de Gestão Financeira Pessoal</p>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Finanças SaaS</h1>
+            <p className="text-xs font-semibold text-slate-500 mt-1">Plataforma Profissional de Gestão Financeira</p>
           </div>
 
           {authError && (
@@ -234,7 +234,7 @@ export default function App() {
               disabled={authLoading}
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-lg shadow-emerald-200 transition mt-2 cursor-pointer"
             >
-              {authLoading ? 'Carregando...' : (authMode === 'login' ? 'Entrar no Sistema' : 'Criar Minha Conta')}
+              {authLoading ? 'Processando...' : (authMode === 'login' ? 'Entrar no Sistema' : 'Criar Minha Conta')}
             </button>
           </form>
 
@@ -254,183 +254,203 @@ export default function App() {
   const pieData = getPieData();
 
   return (
-    <div className="flex min-h-screen bg-slate-100/70">
+    <div className="min-h-screen bg-slate-100 flex flex-col">
       <Sidebar 
         activeSection={activeSection} 
         setActiveSection={setActiveSection} 
-        sidebarOpen={sidebarOpen} 
-        setSidebarOpen={setSidebarOpen} 
         user={user} 
         handleLogout={handleLogout} 
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white border-b border-slate-200/80 px-8 py-5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-700 font-bold text-2xl">☰</button>
-            <h2 className="text-base font-extrabold text-slate-800 uppercase tracking-wide">
-              {activeSection}
-            </h2>
+      <div className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 flex flex-col gap-6">
+        {/* Topo da Página Ativa */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+          <div>
+            <h2 className="text-xl font-black text-slate-900 capitalize">{activeSection}</h2>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Visão geral e controle completo das suas finanças</p>
           </div>
-
           <div className="flex items-center gap-3">
             <button 
               onClick={handleExportExcel}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-2xl border border-slate-200 transition cursor-pointer"
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-2xl border border-slate-200 transition cursor-pointer flex items-center gap-2"
             >
-              📥 Exportar Excel
+              <span>📥</span> Exportar Excel
             </button>
             <button 
               onClick={() => setShowModal(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-lg shadow-emerald-100 transition cursor-pointer"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-md shadow-emerald-200 transition cursor-pointer flex items-center gap-2"
             >
-              + Novo Lançamento
+              <span>+</span> Novo Lançamento
             </button>
           </div>
-        </header>
+        </div>
 
-        <main className="p-8 max-w-7xl w-full mx-auto">
-          {activeSection === 'dashboard' && (
-            <div className="flex flex-col gap-8">
-              {/* Cards Principais */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Receitas do Mês</span>
-                  <span className="text-3xl font-black text-emerald-600 tracking-tight">{formatMoney(data.summary.totalReceitas)}</span>
+        {/* Conteúdo da Seção Ativa */}
+        {activeSection === 'dashboard' && (
+          <div className="flex flex-col gap-8">
+            {/* 3 Cartões Principais */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between">
+                <div>
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-100 block mb-1">Receita do Mês</span>
+                  <span className="text-3xl font-black tracking-tight">{formatMoney(data.summary.totalReceitas)}</span>
                 </div>
-                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Despesas do Mês</span>
-                  <span className="text-3xl font-black text-rose-600 tracking-tight">{formatMoney(data.summary.totalDespesas)}</span>
-                </div>
-                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Saldo Geral</span>
-                  <span className={`text-3xl font-black tracking-tight ${data.summary.saldoFinal >= 0 ? 'text-slate-900' : 'text-rose-600'}`}>
-                    {formatMoney(data.summary.saldoFinal)}
-                  </span>
-                </div>
+                <button 
+                  onClick={() => { setType('income'); setShowModal(true); }}
+                  className="mt-4 bg-white/20 hover:bg-white/30 text-white font-bold text-xs py-2 px-3 rounded-xl transition cursor-pointer w-fit"
+                >
+                  + Adicionar Receita
+                </button>
               </div>
 
-              {/* Seção Visual de Gráficos e Distribuição */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Gráfico de Pizza - Despesas por Categoria */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-                  <h3 className="font-extrabold text-slate-800 text-sm mb-4 pb-3 border-b border-slate-100">Gráfico de Pizza: Despesas por Categoria</h3>
-                  {pieData.length === 0 ? (
-                    <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-xs font-medium">
-                      <span>Nenhuma despesa cadastrada para exibir no gráfico.</span>
+              <div className="bg-gradient-to-br from-rose-500 to-rose-700 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between">
+                <div>
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-rose-100 block mb-1">Despesas do Mês</span>
+                  <span className="text-3xl font-black tracking-tight">{formatMoney(data.summary.totalDespesas)}</span>
+                </div>
+                <button 
+                  onClick={() => { setType('expense'); setShowModal(true); }}
+                  className="mt-4 bg-white/20 hover:bg-white/30 text-white font-bold text-xs py-2 px-3 rounded-xl transition cursor-pointer w-fit"
+                >
+                  + Lançar Despesa
+                </button>
+              </div>
+
+              <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between">
+                <div>
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-300 block mb-1">Saldo Atual</span>
+                  <span className="text-3xl font-black tracking-tight">{formatMoney(data.summary.saldoFinal)}</span>
+                </div>
+                <span className="mt-4 text-[11px] text-emerald-400 font-bold">✓ Contas atualizadas em tempo real</span>
+              </div>
+            </div>
+
+            {/* Gráficos e Movimentações */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+                <h3 className="font-extrabold text-slate-800 text-sm mb-4 pb-3 border-b border-slate-100">Gráfico de Pizza: Despesas por Categoria</h3>
+                {pieData.length === 0 ? (
+                  <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-xs font-medium">
+                    <span>Nenhuma despesa cadastrada para exibir no gráfico.</span>
+                    <button onClick={() => setShowModal(true)} className="mt-3 bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold cursor-pointer">
+                      + Cadastrar Despesa
+                    </button>
+                  </div>
+                ) : (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => formatMoney(value)} />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <h3 className="font-extrabold text-slate-800 text-sm">Últimas Movimentações</h3>
+                    <span className="text-xs font-bold text-slate-400">{data.transactions.length} lançamentos</span>
+                  </div>
+
+                  {data.transactions.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <p className="text-xs text-slate-400 font-medium mb-3">Nenhum lançamento registrado.</p>
+                      <button onClick={() => setShowModal(true)} className="bg-emerald-600 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl cursor-pointer">
+                        + Cadastrar Lançamento
+                      </button>
                     </div>
                   ) : (
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={50}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value) => formatMoney(value)} />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
+                    <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                      {data.transactions.slice(0, 5).map(t => (
+                        <div key={t.id} className="py-3 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-xs ${t.type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                              {t.type === 'income' ? '+' : '-'}
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-slate-800">{t.description}</p>
+                              <p className="text-[10px] text-slate-400 font-medium">{t.category} • {t.account}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className={`text-xs font-extrabold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-800'}`}>
+                              {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                            </span>
+                            <button onClick={() => handleDeleteTransaction(t.id)} className="text-[11px] text-rose-500 font-bold hover:underline cursor-pointer">Apagar</button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
-
-                {/* Resumo de Movimentações Recentes */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                      <h3 className="font-extrabold text-slate-800 text-sm">Últimas Movimentações</h3>
-                      <span className="text-xs font-bold text-slate-400">{data.transactions.length} lançamentos</span>
-                    </div>
-
-                    {data.transactions.length === 0 ? (
-                      <p className="text-xs text-slate-400 py-12 text-center font-medium">Nenhum lançamento registrado. Clique em "+ Novo Lançamento" para começar.</p>
-                    ) : (
-                      <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
-                        {data.transactions.slice(0, 5).map(t => (
-                          <div key={t.id} className="py-3 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-xs ${t.type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                                {t.type === 'income' ? '+' : '-'}
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold text-slate-800">{t.description}</p>
-                                <p className="text-[10px] text-slate-400 font-medium">{t.category} • {t.account}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <span className={`text-xs font-extrabold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-800'}`}>
-                                {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
-                              </span>
-                              <button onClick={() => handleDeleteTransaction(t.id)} className="text-[11px] text-rose-500 font-bold hover:underline cursor-pointer">Apagar</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {activeSection === 'transactions' && (
-            <div className="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-sm">
-              <h2 className="text-base font-extrabold text-slate-800 mb-6 pb-3 border-b border-slate-100">Todos os Lançamentos ({data.transactions.length})</h2>
-              {data.transactions.length === 0 ? (
-                <p className="text-xs text-slate-400 py-12 text-center font-medium">Nenhum lançamento cadastrado.</p>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {data.transactions.map(t => (
-                    <div key={t.id} className="py-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-bold text-slate-800">{t.description}</p>
-                        <p className="text-[11px] text-slate-400 font-medium">{t.category} • {t.account} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className={`text-xs font-extrabold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-800'}`}>
-                          {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
-                        </span>
-                        <button onClick={() => handleDeleteTransaction(t.id)} className="text-[11px] text-rose-500 font-bold hover:underline cursor-pointer">Apagar</button>
-                      </div>
+        {activeSection === 'transactions' && (
+          <div className="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-sm">
+            <h2 className="text-base font-extrabold text-slate-800 mb-6 pb-3 border-b border-slate-100">Todos os Lançamentos ({data.transactions.length})</h2>
+            {data.transactions.length === 0 ? (
+              <p className="text-xs text-slate-400 py-12 text-center font-medium">Nenhum lançamento cadastrado.</p>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {data.transactions.map(t => (
+                  <div key={t.id} className="py-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">{t.description}</p>
+                      <p className="text-[11px] text-slate-400 font-medium">{t.category} • {t.account} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                    <div className="flex items-center gap-4">
+                      <span className={`text-xs font-extrabold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-800'}`}>
+                        {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
+                      </span>
+                      <button onClick={() => handleDeleteTransaction(t.id)} className="text-[11px] text-rose-500 font-bold hover:underline cursor-pointer">Apagar</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-          {activeSection === 'charts' && <Charts />}
-          {activeSection === 'categories' && <Categories />}
-          {activeSection === 'accounts' && <Accounts />}
-          {activeSection === 'cards' && <CreditCards />}
-          {activeSection === 'installments' && <Installments />}
-          {activeSection === 'fixed' && <FixedExpenses />}
-          {activeSection === 'calendar' && <CalendarView />}
-          {activeSection === 'forecast' && <Forecast />}
-          {activeSection === 'debts' && <Debts />}
-          {activeSection === 'investments' && <Investments />}
-          {activeSection === 'goals' && <Goals />}
-          {activeSection === 'emergency' && <Investments />}
-          {activeSection === 'budget' && <Budget />}
-          {activeSection === 'ai' && <AIAssistant />}
-          {activeSection === 'reports' && <Reports />}
-          {activeSection === 'export' && <ExportExcel />}
-          {activeSection === 'settings' && <Settings />}
-          {activeSection === 'profile' && <Profile />}
-        </main>
+        {activeSection === 'charts' && <Charts />}
+        {activeSection === 'categories' && <Categories />}
+        {activeSection === 'accounts' && <Accounts />}
+        {activeSection === 'cards' && <CreditCards />}
+        {activeSection === 'installments' && <Installments />}
+        {activeSection === 'fixed' && <FixedExpenses />}
+        {activeSection === 'calendar' && <CalendarView />}
+        {activeSection === 'forecast' && <Forecast />}
+        {activeSection === 'debts' && <Debts />}
+        {activeSection === 'investments' && <Investments />}
+        {activeSection === 'goals' && <Goals />}
+        {activeSection === 'emergency' && <Investments />}
+        {activeSection === 'budget' && <Budget />}
+        {activeSection === 'ai' && <AIAssistant />}
+        {activeSection === 'reports' && <Reports />}
+        {activeSection === 'export' && <ExportExcel />}
+        {activeSection === 'settings' && <Settings />}
+        {activeSection === 'profile' && <Profile />}
       </div>
 
-      {/* Modal de Novo Lançamento com Categorias Filtradas */}
+      {/* Modal de Novo Lançamento com Categorias e Ações Corretas */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100">
