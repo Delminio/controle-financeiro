@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+  { id: 'dashboard', label: 'Dashboard (Visão Geral)', icon: '📊' },
   { id: 'transactions', label: 'Lançamentos', icon: '📝' },
   { id: 'categories', label: 'Categorias', icon: '🏷️' },
   { id: 'accounts', label: 'Contas Bancárias', icon: '🏦' },
@@ -27,26 +27,26 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className={`min-h-screen flex ${darkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-800'} font-sans transition-colors duration-200`}>
+    <div className={`min-h-screen flex ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-sky-50/50 text-slate-800'} font-sans transition-colors duration-200`}>
       {/* Overlay Mobile */}
       {mobileOpen && (
         <div 
           onClick={() => setMobileOpen(false)} 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden"
         />
       )}
 
       {/* Sidebar Lateral */}
-      <aside className={`fixed top-0 bottom-0 left-0 z-50 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'} border-r flex flex-col transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed top-0 bottom-0 left-0 z-50 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200/80'} border-r flex flex-col transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         {/* Topo da Sidebar / Brand */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200/50">
+        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-black shadow-md shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-black shadow-sm shrink-0">
               💎
             </div>
             {!collapsed && (
-              <span className="font-black text-slate-900 dark:text-white text-base tracking-tight whitespace-nowrap">
-                Finanças <span className="text-xs text-indigo-600 font-extrabold uppercase">SaaS</span>
+              <span className="font-extrabold text-slate-900 dark:text-white text-base tracking-tight whitespace-nowrap">
+                Finanças
               </span>
             )}
           </div>
@@ -69,7 +69,7 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
                   setActiveTab(item.id);
                   setMobileOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-xs transition cursor-pointer ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-none'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
@@ -83,8 +83,8 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
           })}
         </nav>
 
-        {/* Rodapé da Sidebar: Modo Escuro e Perfil */}
-        <div className="p-3 border-t border-slate-200/60 dark:border-slate-800 space-y-2">
+        {/* Rodapé da Sidebar */}
+        <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-1">
           <button
             onClick={() => setDarkMode(!darkMode)}
             className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
@@ -103,10 +103,10 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
         </div>
       </aside>
 
-      {/* Conteúdo Principal + Barra Superior */}
+      {/* Main Content + Topbar */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ${collapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
         {/* Barra Superior Header */}
-        <header className={`h-16 ${darkMode ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-slate-200'} border-b backdrop-blur-md sticky top-0 z-30 px-6 flex items-center justify-between gap-4`}>
+        <header className={`h-16 ${darkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200/80'} border-b backdrop-blur-md sticky top-0 z-30 px-6 flex items-center justify-between gap-4`}>
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setMobileOpen(true)}
@@ -114,11 +114,11 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
             >
               ☰
             </button>
-            <div className="relative hidden sm:block w-64">
+            <div className="relative hidden sm:block w-72">
               <input
                 type="text"
                 placeholder="Pesquisar movimentações..."
-                className={`w-full ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-slate-100 border-slate-200 text-slate-800'} text-xs rounded-xl pl-9 pr-4 py-2 border focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+                className={`w-full ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-100/80 border-slate-200/60 text-slate-800'} text-xs rounded-xl pl-9 pr-4 py-2 border focus:outline-none focus:ring-2 focus:ring-indigo-500`}
               />
               <span className="absolute left-3 top-2.5 text-xs text-slate-400">🔍</span>
             </div>
@@ -127,13 +127,13 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
           <div className="flex items-center gap-4">
             <button className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 relative">
               🔔
-              <span className="absolute top-1 right-1 w-2 h-2 bg-indigo-600 rounded-full"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full"></span>
             </button>
 
-            <div className="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
+            <div className="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
 
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-sm shadow-sm">
                 {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
               <div className="hidden md:flex flex-col text-left">
