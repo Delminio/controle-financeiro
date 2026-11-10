@@ -32,8 +32,6 @@ const INCOME_CATEGORIES = [
   'Renda de Aluguel', 'Dividendos', 'Rendimentos', 'Cashback', 'Outros Recebimentos'
 ];
 
-const PEOPLE_LIST = ['Bernadete', 'Principal', 'Família', 'Filho'];
-
 const PIE_COLORS = ['#10b981', '#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'];
 
 export default function App() {
@@ -49,6 +47,7 @@ export default function App() {
 
   const [activeSection, setActiveSection] = useState('dashboard');
   const [data, setData] = useState({ summary: { totalReceitas: 0, totalDespesas: 0, saldoFinal: 0 }, transactions: [] });
+  const [peopleList, setPeopleList] = useState(['Principal']);
 
   const [showModal, setShowModal] = useState(false);
   const [description, setDescription] = useState('');
@@ -56,7 +55,7 @@ export default function App() {
   const [type, setType] = useState('expense');
   const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
   const [account, setAccount] = useState('Nubank');
-  const [person, setPerson] = useState(PEOPLE_LIST[0]);
+  const [person, setPerson] = useState('Principal');
   const [submitting, setSubmitting] = useState(false);
 
   const API_URL = 'https://controle-financeiro-x8ah.onrender.com/api';
@@ -112,9 +111,29 @@ export default function App() {
     }
   };
 
+  const fetchPeopleList = async () => {
+    if (!token) return;
+    try {
+      const res = await fetchWithAuth('/people');
+      if (res.ok) {
+        const json = await res.json();
+        const names = json.map(p => p.name);
+        setPeopleList(names);
+        if (names.length > 0 && !names.includes(person)) {
+          setPerson(names[0]);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    if (token) fetchData();
-  }, [token]);
+    if (token) {
+      fetchData();
+      fetchPeopleList();
+    }
+  }, [token, activeSection]);
 
   useEffect(() => {
     setCategory(type === 'expense' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0]);
@@ -138,7 +157,7 @@ export default function App() {
         fetchData();
       } else {
         const errJson = await res.json();
-        alert(errJson.error || 'Erro ao salvar lançamento.');
+        alert(errJson.error || 'Erro ao salvar lançamento[cite: 6].');
       }
     } catch (err) {
       console.error(err);
@@ -278,7 +297,7 @@ export default function App() {
               <span>📥</span> Exportar Excel
             </button>
             <button 
-              onClick={() => setShowModal(true)}
+              onClick={() => { fetchPeopleList(); setShowModal(true); }}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-2xl shadow-md shadow-emerald-200 transition cursor-pointer flex items-center gap-2"
             >
               <span>+</span> Novo Lançamento
@@ -295,7 +314,7 @@ export default function App() {
                   <span className="text-3xl font-black tracking-tight">{formatMoney(data.summary.totalReceitas)}</span>
                 </div>
                 <button 
-                  onClick={() => { setType('income'); setShowModal(true); }}
+                  onClick={() => { setType('income'); fetchPeopleList(); setShowModal(true); }}
                   className="mt-4 bg-white/20 hover:bg-white/30 text-white font-bold text-xs py-2 px-3 rounded-xl transition cursor-pointer w-fit"
                 >
                   + Adicionar Receita
@@ -308,7 +327,7 @@ export default function App() {
                   <span className="text-3xl font-black tracking-tight">{formatMoney(data.summary.totalDespesas)}</span>
                 </div>
                 <button 
-                  onClick={() => { setType('expense'); setShowModal(true); }}
+                  onClick={() => { setType('expense'); fetchPeopleList(); setShowModal(true); }}
                   className="mt-4 bg-white/20 hover:bg-white/30 text-white font-bold text-xs py-2 px-3 rounded-xl transition cursor-pointer w-fit"
                 >
                   + Lançar Despesa
@@ -330,7 +349,7 @@ export default function App() {
                 {pieData.length === 0 ? (
                   <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-xs font-medium">
                     <span>Nenhuma despesa cadastrada para exibir no gráfico.</span>
-                    <button onClick={() => setShowModal(true)} className="mt-3 bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold cursor-pointer">
+                    <button onClick={() => { fetchPeopleList(); setShowModal(true); }} className="mt-3 bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold cursor-pointer">
                       + Cadastrar Despesa
                     </button>
                   </div>
@@ -369,7 +388,7 @@ export default function App() {
                   {data.transactions.length === 0 ? (
                     <div className="py-12 text-center">
                       <p className="text-xs text-slate-400 font-medium mb-3">Nenhum lançamento registrado.</p>
-                      <button onClick={() => setShowModal(true)} className="bg-emerald-600 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl cursor-pointer">
+                      <button onClick={() => { fetchPeopleList(); setShowModal(true); }} className="bg-emerald-600 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl cursor-pointer">
                         + Cadastrar Lançamento
                       </button>
                     </div>
@@ -383,7 +402,7 @@ export default function App() {
                             </div>
                             <div>
                               <p className="text-xs font-bold text-slate-800">{t.description}</p>
-                              <p className="text-[10px] text-slate-400 font-medium">{t.category} • {t.account} • {t.person}</p>
+                              <p className="text-[10px] text-slate-400 font-medium">{t.category} • {t.account} • Resp: {t.person}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
@@ -489,7 +508,7 @@ export default function App() {
                     onChange={(e) => setPerson(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600 cursor-pointer"
                   >
-                    {PEOPLE_LIST.map(p => (
+                    {peopleList.map(p => (
                       <option key={p} value={p}>{p}</option>
                     ))}
                   </select>

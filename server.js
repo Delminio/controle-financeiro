@@ -55,7 +55,22 @@ const initDb = async () => {
         date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log('Base de dados inicializada com sucesso.');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS people (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        name VARCHAR(100) NOT NULL
+      )
+    `);
+
+    // Migrações automáticas caso a tabela já exista
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'Outros'`);
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS account VARCHAR(50) DEFAULT 'Nubank'`);
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS person VARCHAR(50) DEFAULT 'Principal'`);
+    await pool.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Pago'`);
+
+    console.log('Base de dados inicializada e atualizada com sucesso.');
   } catch (err) {
     console.error('Erro ao inicializar base de dados:', err);
   }
@@ -77,6 +92,9 @@ app.post('/api/auth/register', async (req, res) => {
     );
 
     const user = result.rows[0];
+    // Insere pessoa padrão
+    await pool.query('INSERT INTO people (user_id, name) VALUES ($1, $2)', [user.id, name]);
+
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ user, token });
   } catch (err) {
@@ -103,6 +121,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Rotas de Transações
 app.get('/api/transactions', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM transactions WHERE user_id = $1 ORDER BY date DESC', [req.user.id]);
@@ -148,6 +167,41 @@ app.delete('/api/transactions/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Rotas de Pessoas (Configurações)
+app.get('/api/people', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM people WHERE user_id = $1 ORDER BY id ASC', [req.user.id]);
+    if (result.rows.length === 0) {
+      await pool.query('INSERT INTO people (user_id, name) VALUES ($1, $2)', [req.user.id, 'Principal']);
+      const def = await pool.query('SELECT * FROM people WHERE user_id = $1', [req.user.id]);
+      return res.json(def.rows);
+    }
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar pessoas.' });
+  }
+});
+
+app.post('/api/people', authenticateToken, async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nome obrigatório.' });
+  try {
+    const result = await pool.query('INSERT INTO people (user_id, name) VALUES ($1, $2) RETURNING *', [req.user.id, name.trim()]);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao cadastrar pessoa.' });
+  }
+});
+
+app.delete('/api/people/:id', authenticateToken, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM people WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao apagar pessoa.' });
+  }
+});
+
 app.get('/api/export/excel', authenticateToken, async (req, res) => {
   try {
     const transResult = await pool.query('SELECT description, amount, type, category, account, person, status, date FROM transactions WHERE user_id = $1 ORDER BY date DESC', [req.user.id]);
@@ -168,7 +222,7 @@ app.get('/api/export/excel', authenticateToken, async (req, res) => {
 
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename="Relatorio_Financeiro.xlsx"');
+    res.setHeader('Content-Disposition', 'attachment; filename="Relatorio_Financial.xlsx"');
     res.send(buffer);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao gerar arquivo Excel.' });
