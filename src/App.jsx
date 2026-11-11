@@ -9,7 +9,6 @@ import Charts from './pages/Charts';
 import CreditCards from './pages/CreditCards';
 import Debts from './pages/Debts';
 import Emergency from './pages/Emergency';
-import ExportExcel from './pages/ExportExcel';
 import FixedExpenses from './pages/FixedExpenses';
 import Forecast from './pages/Forecast';
 import Goals from './pages/Goals';
@@ -78,7 +77,7 @@ export default function App() {
   const [incomeCategory, setIncomeCategory] = useState(INCOME_CATEGORIES[0]);
   const [incomePaymentMethod, setIncomePaymentMethod] = useState('PIX');
 
-  // Dados do Servidor
+  // Dados remotos da API
   const [cardsList, setCardsList] = useState([]);
   const [accountsList, setAccountsList] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -328,11 +327,11 @@ export default function App() {
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout}>
-      {/* 1. DASHBOARD */}
+      {/* 1. DASHBOARD IGUAL À IMAGEM */}
       {activeTab === 'dashboard' && (
         <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <h2 className="text-xl font-bold tracking-tight">Dashboard</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-[#161b2e] dark:text-slate-100">Dashboard</h2>
             <div className="flex items-center gap-2">
               <button onClick={() => setShowIncomeModal(true)} className="bg-[#0f9d6b] hover:opacity-90 text-white font-semibold text-xs px-3.5 py-2 rounded-lg cursor-pointer transition">
                 + Lançar Receita
@@ -340,18 +339,18 @@ export default function App() {
               <button onClick={() => setShowExpenseModal(true)} className="bg-[#d64550] hover:opacity-90 text-white font-semibold text-xs px-3.5 py-2 rounded-lg cursor-pointer transition">
                 − Lançar Despesa
               </button>
-              <button onClick={handleExportExcel} className="border border-[#e3e6ee] dark:border-[#252c45] bg-white dark:bg-[#151b2e] text-xs font-semibold px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition">
+              <button onClick={handleExportExcel} className="border border-[#e3e6ee] dark:border-[#252c45] bg-white dark:bg-[#151b2e] text-[#161b2e] dark:text-slate-100 text-xs font-semibold px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition">
                 Exportar Excel
               </button>
             </div>
           </div>
 
-          {/* Cards KPI Estilo HTML */}
+          {/* Cards KPI */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="bg-white dark:bg-[#151b2e] border border-[#e3e6ee] dark:border-[#252c45] rounded-lg p-4">
               <small className="block text-xs text-[#667085] dark:text-[#8f97b3] font-medium mb-1">Receitas do Mês</small>
               <div className="flex items-baseline gap-1.5">
-                <b className="text-2xl font-bold tracking-tight">{formatMoney(summary.totalReceitas)}</b>
+                <b className="text-2xl font-bold tracking-tight text-[#161b2e] dark:text-slate-100">{formatMoney(summary.totalReceitas)}</b>
                 <i className="not-italic text-xs font-semibold text-[#0f9d6b]">+12%</i>
               </div>
             </div>
@@ -359,7 +358,7 @@ export default function App() {
             <div className="bg-white dark:bg-[#151b2e] border border-[#e3e6ee] dark:border-[#252c45] rounded-lg p-4">
               <small className="block text-xs text-[#667085] dark:text-[#8f97b3] font-medium mb-1">Despesas (Débito/PIX)</small>
               <div className="flex items-baseline gap-1.5">
-                <b className="text-2xl font-bold tracking-tight">{formatMoney(summary.totalDespesasDebito)}</b>
+                <b className="text-2xl font-bold tracking-tight text-[#161b2e] dark:text-slate-100">{formatMoney(summary.totalDespesasDebito)}</b>
                 <i className="not-italic text-xs font-semibold text-[#d64550]">-4%</i>
               </div>
             </div>
@@ -384,14 +383,14 @@ export default function App() {
           </div>
 
           {/* Lista de Movimentações */}
-          <div className="bg-white dark:bg-[#151b2e] border border-[#e3e6ee] dark:border-[#252c45] rounded-lg p-4">
-            <h3 className="text-sm font-semibold mb-3">Últimas Movimentações</h3>
+          <div className="bg-white dark:bg-[#151b2e] border border-[#e3e6ee] dark:border-[#252c45] rounded-lg p-5">
+            <h3 className="text-sm font-semibold mb-3 text-[#161b2e] dark:text-slate-100">Últimas Movimentações</h3>
             {transactions.length === 0 ? (
-              <p className="text-xs text-[#667085] dark:text-[#8f97b3] text-center py-6">Nenhum lançamento registrado.</p>
+              <p className="text-xs text-[#667085] dark:text-[#8f97b3] text-center py-10">Nenhum lançamento registrado.</p>
             ) : (
               <div className="divide-y divide-[#e3e6ee] dark:divide-[#252c45]">
                 {transactions.slice(0, 5).map(t => (
-                  <div key={t.id} className="py-2.5 flex items-center justify-between text-xs">
+                  <div key={t.id} className="py-3 flex items-center justify-between text-xs">
                     <div>
                       <p className="font-semibold text-[#161b2e] dark:text-slate-100">{t.description}</p>
                       <p className="text-[11px] text-[#667085] dark:text-[#8f97b3]">{t.category} • {t.payment_method || 'Dinheiro'}</p>
@@ -420,12 +419,12 @@ export default function App() {
       {activeTab === 'transactions' && (
         <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <h2 className="text-xl font-bold tracking-tight">Lançamentos</h2>
+            <h2 className="text-xl font-bold tracking-tight text-[#161b2e] dark:text-slate-100">Lançamentos</h2>
             <div className="flex items-center gap-2">
               <button onClick={() => setShowIncomeModal(true)} className="bg-[#0f9d6b] text-white font-semibold text-xs px-3.5 py-2 rounded-lg cursor-pointer">
                 + Novo Lançamento
               </button>
-              <button onClick={handleExportExcel} className="border border-[#e3e6ee] dark:border-[#252c45] bg-white dark:bg-[#151b2e] text-xs font-semibold px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+              <button onClick={handleExportExcel} className="border border-[#e3e6ee] dark:border-[#252c45] bg-white dark:bg-[#151b2e] text-[#161b2e] dark:text-slate-100 text-xs font-semibold px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
                 Exportar Excel
               </button>
             </div>
@@ -449,10 +448,10 @@ export default function App() {
                 <tbody className="divide-y divide-[#e3e6ee] dark:divide-[#252c45] text-xs">
                   {transactions.map(t => (
                     <tr key={t.id} className="hover:bg-[#f1f3f8] dark:hover:bg-[#1c2339] transition">
-                      <td className="py-2.5">{new Date(t.date).toLocaleDateString('pt-BR')}</td>
-                      <td className="py-2.5 font-semibold">{t.description}</td>
+                      <td className="py-2.5 text-[#161b2e] dark:text-slate-100">{new Date(t.date).toLocaleDateString('pt-BR')}</td>
+                      <td className="py-2.5 font-semibold text-[#161b2e] dark:text-slate-100">{t.description}</td>
                       <td className="py-2.5 text-[#667085] dark:text-[#8f97b3]">{t.category}</td>
-                      <td className="py-2.5">{t.payment_method || 'Dinheiro'}</td>
+                      <td className="py-2.5 text-[#161b2e] dark:text-slate-100">{t.payment_method || 'Dinheiro'}</td>
                       <td className={`py-2.5 font-bold ${t.type === 'income' ? 'text-[#0f9d6b]' : t.payment_method === 'Cartão de Crédito' ? 'text-[#7a5af8]' : 'text-[#d64550]'}`}>
                         {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
                       </td>
@@ -509,7 +508,7 @@ export default function App() {
                   placeholder="Ex: Mercado, Luz, Farmácia"
                   value={expenseDesc}
                   onChange={(e) => setExpenseDesc(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] text-[#161b2e] dark:text-white rounded-md px-3 py-2 outline-none"
                   required
                 />
               </div>
@@ -522,7 +521,7 @@ export default function App() {
                   placeholder="0.00"
                   value={expenseAmount}
                   onChange={(e) => setExpenseAmount(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] text-[#161b2e] dark:text-white rounded-md px-3 py-2 outline-none"
                   required
                 />
               </div>
@@ -532,7 +531,7 @@ export default function App() {
                 <select
                   value={expenseCategory}
                   onChange={(e) => setExpenseCategory(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] text-[#161b2e] dark:text-white rounded-md px-3 py-2 outline-none cursor-pointer"
                 >
                   {EXPENSE_CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -545,7 +544,7 @@ export default function App() {
                 <select
                   value={expensePaymentMethod}
                   onChange={(e) => setExpensePaymentMethod(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] text-[#161b2e] dark:text-white rounded-md px-3 py-2 outline-none cursor-pointer"
                 >
                   <option value="Dinheiro">Dinheiro</option>
                   <option value="PIX">PIX</option>
@@ -562,7 +561,7 @@ export default function App() {
                     <select
                       value={expenseCardId}
                       onChange={(e) => setExpenseCardId(e.target.value)}
-                      className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
+                      className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] text-[#161b2e] dark:text-white rounded-md px-3 py-2 outline-none cursor-pointer"
                       required
                     >
                       {cardsList.length === 0 ? (
@@ -582,7 +581,7 @@ export default function App() {
                     <select
                       value={expenseInstallments}
                       onChange={(e) => setExpenseInstallments(e.target.value)}
-                      className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
+                      className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] text-[#161b2e] dark:text-white rounded-md px-3 py-2 outline-none cursor-pointer"
                     >
                       {[1,2,3,4,5,6,7,8,9,10,11,12].map(num => (
                         <option key={num} value={num}>{num}x {num === 1 ? '(À vista)' : 'sem juros'}</option>
@@ -617,7 +616,7 @@ export default function App() {
                   placeholder="Ex: Salário, Freelance"
                   value={incomeDesc}
                   onChange={(e) => setIncomeDesc(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] text-[#161b2e] dark:text-white rounded-md px-3 py-2 outline-none"
                   required
                 />
               </div>
@@ -630,7 +629,7 @@ export default function App() {
                   placeholder="0.00"
                   value={incomeAmount}
                   onChange={(e) => setIncomeAmount(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] text-[#161b2e] dark:text-white rounded-md px-3 py-2 outline-none"
                   required
                 />
               </div>
@@ -640,7 +639,7 @@ export default function App() {
                 <select
                   value={incomeCategory}
                   onChange={(e) => setIncomeCategory(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] text-[#161b2e] dark:text-white rounded-md px-3 py-2 outline-none cursor-pointer"
                 >
                   {INCOME_CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -653,7 +652,7 @@ export default function App() {
                 <select
                   value={incomePaymentMethod}
                   onChange={(e) => setIncomePaymentMethod(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] text-[#161b2e] dark:text-white rounded-md px-3 py-2 outline-none cursor-pointer"
                 >
                   <option value="PIX">PIX</option>
                   <option value="Transferência">Transferência / TED</option>
