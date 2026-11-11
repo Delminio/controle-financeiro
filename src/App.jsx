@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
-import BankLogo from './components/BankLogos';
 import Accounts from './pages/Accounts';
 import AIAssistant from './pages/AIAssistant';
 import Budget from './pages/Budget';
@@ -61,11 +60,11 @@ export default function App() {
   const [name, setName] = useState('');
   const [authError, setAuthError] = useState('');
 
-  // Modais de Lançamentos
+  // Modais de Lançamento
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
 
-  // Formulário Despesa
+  // Estados Formulário Despesa
   const [expenseDesc, setExpenseDesc] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState(EXPENSE_CATEGORIES[0]);
@@ -73,13 +72,13 @@ export default function App() {
   const [expenseCardId, setExpenseCardId] = useState('');
   const [expenseInstallments, setExpenseInstallments] = useState('1');
 
-  // Formulário Receita
+  // Estados Formulário Receita
   const [incomeDesc, setIncomeDesc] = useState('');
   const [incomeAmount, setIncomeAmount] = useState('');
   const [incomeCategory, setIncomeCategory] = useState(INCOME_CATEGORIES[0]);
   const [incomePaymentMethod, setIncomePaymentMethod] = useState('PIX');
 
-  // Dados remotos
+  // Dados do Servidor
   const [cardsList, setCardsList] = useState([]);
   const [accountsList, setAccountsList] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -260,64 +259,64 @@ export default function App() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl border border-slate-100">
+      <div className="min-h-screen bg-[#0e1220] flex items-center justify-center p-4">
+        <div className="bg-[#151b2e] w-full max-w-md rounded-xl p-8 border border-[#252c45] shadow-2xl">
           <div className="text-center mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white text-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-indigo-500/30">
-              💎
+            <div className="w-10 h-10 rounded-lg bg-[#2f55d4] text-white text-xl flex items-center justify-center mx-auto mb-2 font-black">
+              F
             </div>
-            <h1 className="text-2xl font-black text-slate-900">Finanças SaaS</h1>
-            <p className="text-xs text-slate-500 mt-1">Gestão Financeira Comercial & Pessoal</p>
+            <h1 className="text-xl font-bold text-white">Finanças</h1>
+            <p className="text-xs text-[#8f97b3] mt-0.5">Gestão Financeira Comercial & Pessoal</p>
           </div>
 
           {authError && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-600 text-xs p-3 rounded-2xl mb-4 text-center font-bold">
+            <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs p-3 rounded-lg mb-4 text-center font-semibold">
               {authError}
             </div>
           )}
 
-          <form onSubmit={handleAuth} className="flex flex-col gap-4">
+          <form onSubmit={handleAuth} className="flex flex-col gap-3">
             {!isLogin && (
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Nome Completo</label>
+                <label className="block text-xs font-semibold text-[#8f97b3] mb-1">Nome Completo</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-[#0e1220] border border-[#252c45] text-white rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#2f55d4]"
                   required
                 />
               </div>
             )}
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">E-mail</label>
+              <label className="block text-xs font-semibold text-[#8f97b3] mb-1">E-mail</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-[#0e1220] border border-[#252c45] text-white rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#2f55d4]"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">Senha</label>
+              <label className="block text-xs font-semibold text-[#8f97b3] mb-1">Senha</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-[#0e1220] border border-[#252c45] text-white rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#2f55d4]"
                 required
               />
             </div>
 
-            <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-lg shadow-indigo-200 transition cursor-pointer">
-              {isLogin ? 'Entrar no Sistema' : 'Criar Conta SaaS'}
+            <button type="submit" className="mt-2 bg-[#2f55d4] hover:bg-[#2546b3] text-white font-semibold py-2.5 rounded-lg text-xs transition cursor-pointer">
+              {isLogin ? 'Entrar' : 'Criar Conta'}
             </button>
           </form>
 
           <div className="text-center mt-6">
-            <button onClick={() => setIsLogin(!isLogin)} className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer">
-              {isLogin ? 'Não tem conta? Registe-se gratuitamente' : 'Já possui conta? Faça login'}
+            <button onClick={() => setIsLogin(!isLogin)} className="text-xs text-[#8f97b3] hover:text-white cursor-pointer">
+              {isLogin ? 'Não tem conta? Registe-se' : 'Já tem conta? Faça login'}
             </button>
           </div>
         </div>
@@ -329,90 +328,82 @@ export default function App() {
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout}>
-      {/* 1. DASHBOARD — VISÃO GERAL (SEGUINDO FIELMENTE A ILUSTRAÇÃO 1 DA IMAGEM) */}
+      {/* 1. DASHBOARD */}
       {activeTab === 'dashboard' && (
-        <div className="flex flex-col gap-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">Dashboard (Visão Geral)</h2>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Resumo executivo das finanças</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={handleExportExcel} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs cursor-pointer hover:bg-slate-200 transition">
-                📥 Exportar Excel
-              </button>
-              <button onClick={() => setShowExpenseModal(true)} className="bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer transition">
-                - Lançar Despesa
-              </button>
-              <button onClick={() => setShowIncomeModal(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer transition">
+        <div className="flex flex-col gap-5">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h2 className="text-xl font-bold tracking-tight">Dashboard</h2>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowIncomeModal(true)} className="bg-[#0f9d6b] hover:opacity-90 text-white font-semibold text-xs px-3.5 py-2 rounded-lg cursor-pointer transition">
                 + Lançar Receita
               </button>
+              <button onClick={() => setShowExpenseModal(true)} className="bg-[#d64550] hover:opacity-90 text-white font-semibold text-xs px-3.5 py-2 rounded-lg cursor-pointer transition">
+                − Lançar Despesa
+              </button>
+              <button onClick={handleExportExcel} className="border border-[#e3e6ee] dark:border-[#252c45] bg-white dark:bg-[#151b2e] text-xs font-semibold px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition">
+                Exportar Excel
+              </button>
             </div>
           </div>
 
-          {/* 4 CARDS SUPERIORES COLORIDOS FIÉIS À IMAGEM DE REFERÊNCIA */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {/* CARD 1: RECEITAS (VERDE ESMERALDA) */}
-            <div className="bg-emerald-500 text-white p-5 rounded-2xl shadow-md shadow-emerald-500/10 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-100">Receitas do Mês</span>
-                <span className="w-7 h-7 rounded-lg bg-emerald-400/40 flex items-center justify-center text-xs">📈</span>
+          {/* Cards KPI Estilo HTML */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="bg-white dark:bg-[#151b2e] border border-[#e3e6ee] dark:border-[#252c45] rounded-lg p-4">
+              <small className="block text-xs text-[#667085] dark:text-[#8f97b3] font-medium mb-1">Receitas do Mês</small>
+              <div className="flex items-baseline gap-1.5">
+                <b className="text-2xl font-bold tracking-tight">{formatMoney(summary.totalReceitas)}</b>
+                <i className="not-italic text-xs font-semibold text-[#0f9d6b]">+12%</i>
               </div>
-              <span className="text-2xl font-black">{formatMoney(summary.totalReceitas)}</span>
             </div>
 
-            {/* CARD 2: DESPESAS DÉBITO (CORAL/VERMELHO) */}
-            <div className="bg-rose-500 text-white p-5 rounded-2xl shadow-md shadow-rose-500/10 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-rose-100">Despesas do Mês</span>
-                <span className="w-7 h-7 rounded-lg bg-rose-400/40 flex items-center justify-center text-xs">📉</span>
+            <div className="bg-white dark:bg-[#151b2e] border border-[#e3e6ee] dark:border-[#252c45] rounded-lg p-4">
+              <small className="block text-xs text-[#667085] dark:text-[#8f97b3] font-medium mb-1">Despesas (Débito/PIX)</small>
+              <div className="flex items-baseline gap-1.5">
+                <b className="text-2xl font-bold tracking-tight">{formatMoney(summary.totalDespesasDebito)}</b>
+                <i className="not-italic text-xs font-semibold text-[#d64550]">-4%</i>
               </div>
-              <span className="text-2xl font-black">{formatMoney(summary.totalDespesasDebito)}</span>
             </div>
 
-            {/* CARD 3: SALDO ATUAL (ROXO VIBRANTE) */}
-            <div className="bg-indigo-600 text-white p-5 rounded-2xl shadow-md shadow-indigo-600/10 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-100">Saldo Atual</span>
-                <span className="w-7 h-7 rounded-lg bg-indigo-500/40 flex items-center justify-center text-xs">🏦</span>
+            <div className="bg-white dark:bg-[#151b2e] border border-[#e3e6ee] dark:border-[#252c45] rounded-lg p-4">
+              <small className="block text-xs text-[#667085] dark:text-[#8f97b3] font-medium mb-1">Saldo Atual</small>
+              <div className="flex items-baseline gap-1.5">
+                <b className={`text-2xl font-bold tracking-tight ${summary.saldoFinal >= 0 ? 'text-[#0f9d6b]' : 'text-[#d64550]'}`}>
+                  {formatMoney(summary.saldoFinal)}
+                </b>
+                <i className="not-italic text-xs font-semibold text-[#0f9d6b]">+8%</i>
               </div>
-              <span className="text-2xl font-black">{formatMoney(summary.saldoFinal)}</span>
             </div>
 
-            {/* CARD 4: FATURA DO CARTÃO (AZUL/ROXO AZULADO) */}
-            <div className="bg-blue-600 text-white p-5 rounded-2xl shadow-md shadow-blue-600/10 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-100">Fatura do Cartão</span>
-                <span className="w-7 h-7 rounded-lg bg-blue-500/40 flex items-center justify-center text-xs">💳</span>
+            <div className="bg-white dark:bg-[#151b2e] border border-[#e3e6ee] dark:border-[#252c45] rounded-lg p-4">
+              <small className="block text-xs text-[#667085] dark:text-[#8f97b3] font-medium mb-1">Fatura do Cartão</small>
+              <div className="flex items-baseline gap-1.5">
+                <b className="text-2xl font-bold tracking-tight text-[#7a5af8]">{formatMoney(summary.totalDespesasCredito)}</b>
+                <i className="not-italic text-xs font-semibold text-[#667085]">Fatura</i>
               </div>
-              <span className="text-2xl font-black">{formatMoney(summary.totalDespesasCredito)}</span>
             </div>
           </div>
 
-          {/* ÚLTIMAS MOVIMENTAÇÕES (CARD BRANCO LIMPO) */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-            <h3 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm mb-4">Últimas Movimentações</h3>
+          {/* Lista de Movimentações */}
+          <div className="bg-white dark:bg-[#151b2e] border border-[#e3e6ee] dark:border-[#252c45] rounded-lg p-4">
+            <h3 className="text-sm font-semibold mb-3">Últimas Movimentações</h3>
             {transactions.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-6">Nenhum lançamento registrado.</p>
+              <p className="text-xs text-[#667085] dark:text-[#8f97b3] text-center py-6">Nenhum lançamento registrado.</p>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="divide-y divide-[#e3e6ee] dark:divide-[#252c45]">
                 {transactions.slice(0, 5).map(t => (
-                  <div key={t.id} className="py-3 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-3">
-                      <BankLogo name={t.account} />
-                      <div>
-                        <p className="font-bold text-slate-800 dark:text-slate-200">{t.description}</p>
-                        <p className="text-[10px] text-slate-400">{t.category} • {t.payment_method || 'Dinheiro'}</p>
-                      </div>
+                  <div key={t.id} className="py-2.5 flex items-center justify-between text-xs">
+                    <div>
+                      <p className="font-semibold text-[#161b2e] dark:text-slate-100">{t.description}</p>
+                      <p className="text-[11px] text-[#667085] dark:text-[#8f97b3]">{t.category} • {t.payment_method || 'Dinheiro'}</p>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className={`font-black ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
+                    <div className="flex items-center gap-3">
+                      <span className={`font-bold ${t.type === 'income' ? 'text-[#0f9d6b]' : t.payment_method === 'Cartão de Crédito' ? 'text-[#7a5af8]' : 'text-[#d64550]'}`}>
                         {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
                       </span>
                       <button
                         onClick={() => handleDeleteTransaction(t.id)}
-                        className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950 text-rose-500 rounded-lg transition cursor-pointer"
-                        title="Apagar lançamento"
+                        className="text-[#667085] hover:text-[#d64550] p-1 transition cursor-pointer"
+                        title="Apagar"
                       >
                         🗑️
                       </button>
@@ -427,60 +418,62 @@ export default function App() {
 
       {/* 2. LANÇAMENTOS */}
       {activeTab === 'transactions' && (
-        <div className="flex flex-col gap-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">Lançamentos</h2>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Histórico completo de receitas e despesas</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={handleExportExcel} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs cursor-pointer">
-                📥 Exportar Excel
+        <div className="flex flex-col gap-5">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h2 className="text-xl font-bold tracking-tight">Lançamentos</h2>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowIncomeModal(true)} className="bg-[#0f9d6b] text-white font-semibold text-xs px-3.5 py-2 rounded-lg cursor-pointer">
+                + Novo Lançamento
               </button>
-              <button onClick={() => setShowExpenseModal(true)} className="bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer">
-                - Lançar Despesa
-              </button>
-              <button onClick={() => setShowIncomeModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md cursor-pointer">
-                + Lançar Receita
+              <button onClick={handleExportExcel} className="border border-[#e3e6ee] dark:border-[#252c45] bg-white dark:bg-[#151b2e] text-xs font-semibold px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+                Exportar Excel
               </button>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <div className="bg-white dark:bg-[#151b2e] border border-[#e3e6ee] dark:border-[#252c45] rounded-lg p-4 overflow-x-auto">
             {transactions.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-8">Nenhum lançamento encontrado.</p>
+              <p className="text-xs text-[#667085] dark:text-[#8f97b3] text-center py-6">Nenhum lançamento encontrado.</p>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {transactions.map(t => (
-                  <div key={t.id} className="py-4 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-3">
-                      <BankLogo name={t.account} />
-                      <div>
-                        <p className="font-black text-slate-800 dark:text-slate-200 text-sm">{t.description}</p>
-                        <p className="text-[11px] text-slate-400">{t.category} • {t.payment_method || 'Dinheiro'} • {new Date(t.date).toLocaleDateString('pt-BR')}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className={`font-black text-sm ${t.type === 'income' ? 'text-emerald-600' : t.payment_method === 'Cartão de Crédito' ? 'text-purple-600' : 'text-rose-600'}`}>
+              <table className="w-full text-left min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-[#e3e6ee] dark:border-[#252c45] text-[11px] text-[#667085] dark:text-[#8f97b3]">
+                    <th className="pb-2 font-semibold">Data</th>
+                    <th className="pb-2 font-semibold">Descrição</th>
+                    <th className="pb-2 font-semibold">Categoria</th>
+                    <th className="pb-2 font-semibold">Forma</th>
+                    <th className="pb-2 font-semibold">Valor</th>
+                    <th className="pb-2 font-semibold text-right">Ação</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#e3e6ee] dark:divide-[#252c45] text-xs">
+                  {transactions.map(t => (
+                    <tr key={t.id} className="hover:bg-[#f1f3f8] dark:hover:bg-[#1c2339] transition">
+                      <td className="py-2.5">{new Date(t.date).toLocaleDateString('pt-BR')}</td>
+                      <td className="py-2.5 font-semibold">{t.description}</td>
+                      <td className="py-2.5 text-[#667085] dark:text-[#8f97b3]">{t.category}</td>
+                      <td className="py-2.5">{t.payment_method || 'Dinheiro'}</td>
+                      <td className={`py-2.5 font-bold ${t.type === 'income' ? 'text-[#0f9d6b]' : t.payment_method === 'Cartão de Crédito' ? 'text-[#7a5af8]' : 'text-[#d64550]'}`}>
                         {t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}
-                      </span>
-                      <button
-                        onClick={() => handleDeleteTransaction(t.id)}
-                        className="px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1"
-                        title="Apagar lançamento"
-                      >
-                        🗑️ <span className="hidden sm:inline">Excluir</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      </td>
+                      <td className="py-2.5 text-right">
+                        <button
+                          onClick={() => handleDeleteTransaction(t.id)}
+                          className="px-2 py-1 border border-[#e3e6ee] dark:border-[#252c45] text-[#d64550] rounded-md text-[11px] font-semibold hover:bg-rose-50 transition cursor-pointer"
+                        >
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
         </div>
       )}
 
-      {/* DEMAIS ABAS INTEGRADAS */}
+      {/* DEMAIS ABAS */}
       {activeTab === 'categories' && <Categories />}
       {activeTab === 'accounts' && <Accounts />}
       {activeTab === 'cards' && <CreditCards />}
@@ -499,50 +492,47 @@ export default function App() {
       {activeTab === 'profile' && <Profile />}
       {activeTab === 'settings' && <Settings />}
 
-      {/* MODAIS MANIFESTADOS */}
+      {/* MODAL DESPESA */}
       {showExpenseModal && (
-        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-800">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-500"></span>
-                <h3 className="font-extrabold text-rose-600 text-sm">Lançar Nova Despesa (-)</h3>
-              </div>
-              <button onClick={() => setShowExpenseModal(false)} className="text-slate-400 font-bold cursor-pointer">✕</button>
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-[#151b2e] w-full max-w-sm rounded-xl p-5 border border-[#e3e6ee] dark:border-[#252c45] shadow-xl">
+            <div className="flex items-center justify-between mb-3 border-b border-[#e3e6ee] dark:border-[#252c45] pb-2">
+              <h3 className="font-bold text-[#d64550] text-sm">Lançar Despesa (-)</h3>
+              <button onClick={() => setShowExpenseModal(false)} className="text-[#667085] font-bold">✕</button>
             </div>
             
-            <form onSubmit={handleCreateExpense} className="flex flex-col gap-3">
+            <form onSubmit={handleCreateExpense} className="flex flex-col gap-3 text-xs">
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Descrição da Despesa</label>
+                <label className="block font-semibold text-[#667085] dark:text-[#8f97b3] mb-1">Descrição</label>
                 <input
                   type="text"
-                  placeholder="Ex: Compra Atacadão, Farmácia, Luz"
+                  placeholder="Ex: Mercado, Luz, Farmácia"
                   value={expenseDesc}
                   onChange={(e) => setExpenseDesc(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Valor (R$)</label>
+                <label className="block font-semibold text-[#667085] dark:text-[#8f97b3] mb-1">Valor (R$)</label>
                 <input
                   type="number"
                   step="0.01"
                   placeholder="0.00"
                   value={expenseAmount}
                   onChange={(e) => setExpenseAmount(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Categoria da Despesa</label>
+                <label className="block font-semibold text-[#667085] dark:text-[#8f97b3] mb-1">Categoria</label>
                 <select
                   value={expenseCategory}
                   onChange={(e) => setExpenseCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
                 >
                   {EXPENSE_CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -551,11 +541,11 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Forma de Pagamento</label>
+                <label className="block font-semibold text-[#667085] dark:text-[#8f97b3] mb-1">Forma de Pagamento</label>
                 <select
                   value={expensePaymentMethod}
                   onChange={(e) => setExpensePaymentMethod(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
                 >
                   <option value="Dinheiro">Dinheiro</option>
                   <option value="PIX">PIX</option>
@@ -568,19 +558,19 @@ export default function App() {
               {expensePaymentMethod === 'Cartão de Crédito' && (
                 <>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Selecionar Cartão de Crédito</label>
+                    <label className="block font-semibold text-[#667085] dark:text-[#8f97b3] mb-1">Cartão de Crédito</label>
                     <select
                       value={expenseCardId}
                       onChange={(e) => setExpenseCardId(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                      className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
                       required
                     >
                       {cardsList.length === 0 ? (
-                        <option value="">Nenhum cartão cadastrado (Cadastre na aba Cartões)</option>
+                        <option value="">Nenhum cartão cadastrado</option>
                       ) : (
                         cardsList.map(c => (
                           <option key={c.id} value={c.id}>
-                            {c.bank_emitter} - {c.card_name} (Limite: R$ {parseFloat(c.card_limit).toFixed(2)})
+                            {c.bank_emitter} - {c.card_name}
                           </option>
                         ))
                       )}
@@ -588,11 +578,11 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Número de Parcelas</label>
+                    <label className="block font-semibold text-[#667085] dark:text-[#8f97b3] mb-1">Parcelas</label>
                     <select
                       value={expenseInstallments}
                       onChange={(e) => setExpenseInstallments(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                      className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
                     >
                       {[1,2,3,4,5,6,7,8,9,10,11,12].map(num => (
                         <option key={num} value={num}>{num}x {num === 1 ? '(À vista)' : 'sem juros'}</option>
@@ -602,7 +592,7 @@ export default function App() {
                 </>
               )}
 
-              <button type="submit" className="mt-3 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs py-3 rounded-2xl shadow-md cursor-pointer transition">
+              <button type="submit" className="mt-2 bg-[#d64550] text-white font-semibold py-2 rounded-md transition cursor-pointer">
                 Confirmar Despesa (-)
               </button>
             </form>
@@ -610,49 +600,47 @@ export default function App() {
         </div>
       )}
 
+      {/* MODAL RECEITA */}
       {showIncomeModal && (
-        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-800">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                <h3 className="font-extrabold text-emerald-600 text-sm">Lançar Nova Receita (+)</h3>
-              </div>
-              <button onClick={() => setShowIncomeModal(false)} className="text-slate-400 font-bold cursor-pointer">✕</button>
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-[#151b2e] w-full max-w-sm rounded-xl p-5 border border-[#e3e6ee] dark:border-[#252c45] shadow-xl">
+            <div className="flex items-center justify-between mb-3 border-b border-[#e3e6ee] dark:border-[#252c45] pb-2">
+              <h3 className="font-bold text-[#0f9d6b] text-sm">Lançar Receita (+)</h3>
+              <button onClick={() => setShowIncomeModal(false)} className="text-[#667085] font-bold">✕</button>
             </div>
             
-            <form onSubmit={handleCreateIncome} className="flex flex-col gap-3">
+            <form onSubmit={handleCreateIncome} className="flex flex-col gap-3 text-xs">
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Descrição da Receita</label>
+                <label className="block font-semibold text-[#667085] dark:text-[#8f97b3] mb-1">Descrição</label>
                 <input
                   type="text"
-                  placeholder="Ex: Salário, Freelance, Rendimentos"
+                  placeholder="Ex: Salário, Freelance"
                   value={incomeDesc}
                   onChange={(e) => setIncomeDesc(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Valor (R$)</label>
+                <label className="block font-semibold text-[#667085] dark:text-[#8f97b3] mb-1">Valor (R$)</label>
                 <input
                   type="number"
                   step="0.01"
                   placeholder="0.00"
                   value={incomeAmount}
                   onChange={(e) => setIncomeAmount(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Categoria da Receita</label>
+                <label className="block font-semibold text-[#667085] dark:text-[#8f97b3] mb-1">Categoria</label>
                 <select
                   value={incomeCategory}
                   onChange={(e) => setIncomeCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
                 >
                   {INCOME_CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -661,11 +649,11 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Forma de Recebimento</label>
+                <label className="block font-semibold text-[#667085] dark:text-[#8f97b3] mb-1">Forma de Recebimento</label>
                 <select
                   value={incomePaymentMethod}
                   onChange={(e) => setIncomePaymentMethod(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs font-semibold cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0e1220] border border-[#e3e6ee] dark:border-[#252c45] rounded-md px-3 py-2 outline-none cursor-pointer"
                 >
                   <option value="PIX">PIX</option>
                   <option value="Transferência">Transferência / TED</option>
@@ -674,7 +662,7 @@ export default function App() {
                 </select>
               </div>
 
-              <button type="submit" className="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3 rounded-2xl shadow-md cursor-pointer transition">
+              <button type="submit" className="mt-2 bg-[#0f9d6b] text-white font-semibold py-2 rounded-md transition cursor-pointer">
                 Confirmar Receita (+)
               </button>
             </form>
