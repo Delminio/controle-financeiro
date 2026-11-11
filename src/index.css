@@ -14,3 +14,97 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ==========================================================================
+   Sobrescrita Global de Tema Escuro para Todas as Sub-páginas
+   ========================================================================== */
+
+/* 1. Fundo da Aplicação */
+html.dark,
+body.dark,
+.dark {
+  background-color: #0e1220 !important;
+  color: #e8eaf3 !important;
+}
+
+/* 2. Forçar todos os Cards, Caixas e Modais para a cor dark (#151b2e) */
+.dark .bg-white,
+.dark .card,
+.dark div[class*="bg-white"],
+.dark section[class*="bg-white"],
+.dark form[class*="bg-white"] {
+  background-color: #151b2e !important;
+  color: #e8eaf3 !important;
+  border-color: #252c45 !important;
+}
+
+/* 3. Inputs, Selects, Textareas e Campos de Formulário (#0e1220) */
+.dark input,
+.dark select,
+.dark textarea,
+.dark .bg-\[\#f4f5f8\],
+.dark .bg-slate-50,
+.dark .bg-slate-100,
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: #0e1220 !important;
+  color: #e8eaf3 !important;
+  border-color: #252c45 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #667085 !important;
+}
+
+/* 4. Textos Secundários, Labels e Legendas */
+.dark label,
+.dark small,
+.dark p.text-slate-500,
+.dark p.text-slate-600,
+.dark p.text-gray-500,
+.dark p.text-gray-600,
+.dark span.text-slate-500,
+.dark span.text-gray-500,
+.dark .text-slate-500,
+.dark .text-slate-600,
+.dark .text-gray-500 {
+  color: #8f97b3 !important;
+}
+
+/* 5. Títulos, Textos Principais e Destaques */
+.dark h1, 
+.dark h2, 
+.dark h3, 
+.dark h4, 
+.dark h5, 
+.dark h6, 
+.dark b, 
+.dark strong,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-gray-900 {
+  color: #e8eaf3 !important;
+}
+
+/* 6. Tabelas (Linhas e Cabeçalhos) */
+.dark table th {
+  color: #8f97b3 !important;
+  border-bottom-color: #252c45 !important;
+}
+
+.dark table td {
+  border-top-color: #252c45 !important;
+  color: #e8eaf3 !important;
+}
+
+.dark table tr:hover td {
+  background-color: #1c2339 !important;
+}
+
+/* 7. Manter Cores dos Botões Principais Operacionais intactas */
+.dark .bg-\[\#0f9d6b\], 
+.dark .bg-[#d64550], 
+.dark .bg-\[\#2f55d4\] {
+  color: #ffffff !important;
+}
